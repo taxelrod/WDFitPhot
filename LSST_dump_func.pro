@@ -67,7 +67,6 @@ gsyn  = gobs - DM             ; g on synthetic scale
 fsyn  = f0*10^(-0.4*gsyn)
 
 nor   = fsyn/fmodg
-help,fsyn,fmodg
 fred  = fred*nor
 fmod  = fmod*nor
 

@@ -20,7 +20,7 @@ PRO MOD_SIGMA,VGRID,T_eff,Log_g,V_mag,SIGMA
 ; SPLINE.................... Spline Interpolation
 ;========================================================================
 
-path  = '/home/tsa/Dropbox/WD/GauthamCode/DATA/'
+path  = 'RunData/'
 ngrid = path + VGRID
 
 RESTORE,ngrid                       ; HEADLAB,PAR,TGRID,GGRID,FN
@@ -30,7 +30,7 @@ RESTORE,ngrid                       ; HEADLAB,PAR,TGRID,GGRID,FN
 ;========================================================================
 
 WNORM = FLOAT( STRMID (VGRID,1,4) )
-print,WNORM
+
 wnor  = [5000, 5423, 5490, 5500, 5510, 5556 ]  ; Standard Wavelengths
 fnor  = [4.834,3.804,3.674,3.655,3.633,3.547]  ; Absolute Fluxes
 fnor  = fnor*1.0E-9
