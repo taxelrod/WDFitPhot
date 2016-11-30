@@ -57,8 +57,11 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,PLOTSTARS=doPlo
 ;        Using bandList together with zeropointsHSTDict should ensure that
 
 
-; Zeropoints on Cycle 22 system
+; Zeropoints on Cycle 22 Vega system
   zeropointsHSTDict = DICTIONARY('F275W', 22.70837, 'F336W', 23.53994, 'F475W', 25.53714,  'F625W', 25.37076,  'F775W', 24.45988, 'F160W', 24.70294)
+;
+; Zeropoints from latest MAST
+;  zeropointsHSTDict = DICTIONARY('F275W', 22.548, 'F336W', 23.550, 'F475W', 25.309,  'F625W', 25.718,  'F775W', 25.485, 'F160W', 28.1875)
 ; Zeropoints as used for Cycle 20 paper
 ;  zeropointsHSTDict = DICTIONARY('F336W', 23.4836, 'F475W', 25.7783,  'F625W', 25.3783,  'F775W', 24.4747, 'F160W', 24.6949)
 
@@ -76,7 +79,7 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,PLOTSTARS=doPlo
      G0[n-1] = Gret
      EBV0[n-1] = EBVret
      idx = (n-1)*nBpHST
-     HSTObsAll[idx:(idx+nBpHST-1)] = HSTObs - zeropointsHST ; these are now instrumental mags
+     HSTObsAll[idx:(idx+nBpHST-1)] = HSTObs - zeropointsHST; these are now instrumental mags
 ;
 ; Set up covariance matrices, diagonal for now
 ;
@@ -168,7 +171,7 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,PLOTSTARS=doPlo
      ;; obsMagGD153f475w = 13.182 - zeropointsHSTDict['F475W'] ; from GN table
      ;; obsMagGD153f625w = 13.455 - zeropointsHSTDict['F625W'] ; from GN table
 
-; cycle 22 system
+; cycle 22 Vega system
      obsMagGD153f336w = -12.02242
      obsMagGD153f475w = -12.47516
      obsMagGD153f625w = -11.80634
@@ -177,17 +180,20 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,PLOTSTARS=doPlo
      paramsAll = AllOpt(FIXEDRV=fixedRv)
 
      bp336w = bpData[nBp+bandDict['F336W']] 
-     synMagGD153f336w = synphot2(modelWl, fluxGD153, bp336w.wavelength, bp336w.throughput, zp[bandDict['F336W']])
+;     synMagGD153f336w = synphot2(modelWl, fluxGD153, bp336w.wavelength, bp336w.throughput, zp[bandDict['F336W']])
+     synMagGD153f336w = synphot2(modelWl, fluxGD153, bp336w.wavelength, bp336w.throughput, 0)
 
      bp475w = bpData[nBp+bandDict['F475W']]
-     synMagGD153f475w = synphot2(modelWl, fluxGD153, bp475w.wavelength, bp475w.throughput, zp[bandDict['F475W']])
+;     synMagGD153f475w = synphot2(modelWl, fluxGD153, bp475w.wavelength, bp475w.throughput, zp[bandDict['F475W']])
+     synMagGD153f475w = synphot2(modelWl, fluxGD153, bp475w.wavelength, bp475w.throughput, 0)
 
      bp625w = bpData[nBp+bandDict['F625W']]
-     synMagGD153f625w = synphot2(modelWl, fluxGD153, bp625w.wavelength, bp625w.throughput, zp[bandDict['F625W']])
+;     synMagGD153f625w = synphot2(modelWl, fluxGD153, bp625w.wavelength, bp625w.throughput, zp[bandDict['F625W']])
+     synMagGD153f625w = synphot2(modelWl, fluxGD153, bp625w.wavelength, bp625w.throughput, 0)
 
-     ;; PRINTF, 3, 'GD153 syn:', synMagGD153f336w, synMagGD153f475w, synMagGD153f625w
-     ;; PRINTF, 3, 'GD153 obs:', obsMagGD153f336w, obsMagGD153f475w, obsMagGD153f625w
-     ;; PRINTF, 3, 'GD153 syn-obs:', synMagGD153f336w - obsMagGD153f336w, synMagGD153f475w - obsMagGD153f475w, synMagGD153f625w - obsMagGD153f625w
+     PRINTF, 2 , 'GD153 syn:', synMagGD153f336w, synMagGD153f475w, synMagGD153f625w
+     PRINTF, 2, 'GD153 obs:', obsMagGD153f336w, obsMagGD153f475w, obsMagGD153f625w
+     PRINTF, 2, 'GD153 syn-obs:', synMagGD153f336w - obsMagGD153f336w, synMagGD153f475w - obsMagGD153f475w, synMagGD153f625w - obsMagGD153f625w
 
 ;
 ; Dump zpBand

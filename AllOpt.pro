@@ -45,13 +45,16 @@ FUNCTION ExtinctFuncAll, paramVec
 ; Stddev of GD153 mags as proxy for reddening
 ;
   bp336w = bpData[nBp+bandDict['F336W']]
-  synMagGD153f336w = synphot2(modelWl, fluxGD153, bp336w.wavelength, bp336w.throughput, zpBand[bandDict['F336W']])
+;  synMagGD153f336w = synphot2(modelWl, fluxGD153, bp336w.wavelength, bp336w.throughput, zpBand[bandDict['F336W']])
+  synMagGD153f336w = synphot2(modelWl, fluxGD153, bp336w.wavelength, bp336w.throughput, 0)
 
   bp475w = bpData[nBp+bandDict['F475W']]
-  synMagGD153f475w = synphot2(modelWl, fluxGD153, bp475w.wavelength, bp475w.throughput, zpBand[bandDict['F475W']])
+;  synMagGD153f475w = synphot2(modelWl, fluxGD153, bp475w.wavelength, bp475w.throughput, zpBand[bandDict['F475W']])
+  synMagGD153f475w = synphot2(modelWl, fluxGD153, bp475w.wavelength, bp475w.throughput, 0)
 
   bp625w = bpData[nBp+bandDict['F625W']]
-  synMagGD153f625w = synphot2(modelWl, fluxGD153, bp625w.wavelength, bp625w.throughput, zpBand[bandDict['F625W']])
+;  synMagGD153f625w = synphot2(modelWl, fluxGD153, bp625w.wavelength, bp625w.throughput, zpBand[bandDict['F625W']])
+  synMagGD153f625w = synphot2(modelWl, fluxGD153, bp625w.wavelength, bp625w.throughput, 0)
 
   GD153delta = DBLARR(3)
   GD153delta[0] = synMagGD153f336w - obsMagGD153f336w
