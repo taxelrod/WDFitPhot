@@ -10,7 +10,7 @@ FUNCTION ExtinctFuncAll, paramVec
 ; 
   COMMON TopInfo,  nStars, nBp, nBpHST, bpData, bandList, bandDict, zp, Tstars, Gstars, zpStar, EBV, modelWl, modelFluxes, sampleHST
 
-  COMMON ZpMinimizeInfo, fitResult, chisqRes, scaleFactor, fluxGD153, obsMagGD153f336w, obsMagGD153f475w, obsMagGD153f625w
+  COMMON ZpMinimizeInfo, fitResult, chisqRes, scaleFactor, fluxGD153, obsMagGD153f275w, obsMagGD153f336w, obsMagGD153f475w, obsMagGD153f625w, obsMagGD153f775w, obsMagGD153f160w
 
   COMMON ScaleInfo, scaleFactor2, scaleFactor2Inv
 
@@ -44,6 +44,9 @@ FUNCTION ExtinctFuncAll, paramVec
 
 ; Stddev of GD153 mags as proxy for reddening
 ;
+  bp275w = bpData[nBp+bandDict['F275W']] 
+  synMagGD153f275w = synphot2(modelWl, fluxGD153, bp275w.wavelength, bp275w.throughput, 0)
+
   bp336w = bpData[nBp+bandDict['F336W']]
 ;  synMagGD153f336w = synphot2(modelWl, fluxGD153, bp336w.wavelength, bp336w.throughput, zpBand[bandDict['F336W']])
   synMagGD153f336w = synphot2(modelWl, fluxGD153, bp336w.wavelength, bp336w.throughput, 0)
@@ -56,10 +59,19 @@ FUNCTION ExtinctFuncAll, paramVec
 ;  synMagGD153f625w = synphot2(modelWl, fluxGD153, bp625w.wavelength, bp625w.throughput, zpBand[bandDict['F625W']])
   synMagGD153f625w = synphot2(modelWl, fluxGD153, bp625w.wavelength, bp625w.throughput, 0)
 
-  GD153delta = DBLARR(3)
-  GD153delta[0] = synMagGD153f336w - obsMagGD153f336w
-  GD153delta[1] = synMagGD153f475w - obsMagGD153f475w
-  GD153delta[2] = synMagGD153f625w - obsMagGD153f625w
+  bp775w = bpData[nBp+bandDict['F775W']] 
+  synMagGD153f775w = synphot2(modelWl, fluxGD153, bp775w.wavelength, bp775w.throughput, 0)
+
+  bp160w = bpData[nBp+bandDict['F160W']] 
+  synMagGD153f160w = synphot2(modelWl, fluxGD153, bp160w.wavelength, bp160w.throughput, 0)
+
+  GD153delta = DBLARR(6)
+  GD153delta[0] = synMagGD153f275w - obsMagGD153f275w + zpBand[bandDict['F275W']]
+  GD153delta[1] = synMagGD153f336w - obsMagGD153f336w + zpBand[bandDict['F336W']]
+  GD153delta[2] = synMagGD153f475w - obsMagGD153f475w + zpBand[bandDict['F475W']]
+  GD153delta[3] = synMagGD153f625w - obsMagGD153f625w + zpBand[bandDict['F625W']]
+  GD153delta[4] = synMagGD153f775w - obsMagGD153f775w + zpBand[bandDict['F775W']]
+  GD153delta[5] = synMagGD153f160w - obsMagGD153f160w + zpBand[bandDict['F160W']]
 
   GD153red = TOTAL((GD153delta - MEAN(GD153delta))^2) / 0.01^2
 
