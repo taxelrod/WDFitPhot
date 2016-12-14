@@ -160,10 +160,10 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,PLOTSTARS=doPlo
      Gstars = G
      zp = DBLARR(nBpHST)
 ;
-; Use GD153 as a reddening constraint
+; Use GD153 as a reddening constraint; T and logg from Bohlin
 ;
-     tempGD153 = 40320.
-     loggGD153 = 7.93
+     tempGD153 = 38686.
+     loggGD153 = 7.66
      LSST_dump_func, tempGD153, loggGD153, 0, 0, 1.0, 0, modelWl,  fluxGD153
 
 ; cycle 20 (paper) system
@@ -178,35 +178,12 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,PLOTSTARS=doPlo
      obsMagGD153f625w = -11.80634
      obsMagGD153f775w = -10.71429 
      obsMagGD153f160w = -10.39641
-
-
-
+;
+; OPTIMIZER CALL    
+; 
      paramsAll = AllOpt(FIXEDRV=fixedRv)
-
-     bp275w = bpData[nBp+bandDict['F275W']] 
-     synMagGD153f275w = synphot2(modelWl, fluxGD153, bp275w.wavelength, bp275w.throughput, 0)
-
-     bp336w = bpData[nBp+bandDict['F336W']] 
-;     synMagGD153f336w = synphot2(modelWl, fluxGD153, bp336w.wavelength, bp336w.throughput, zp[bandDict['F336W']])
-     synMagGD153f336w = synphot2(modelWl, fluxGD153, bp336w.wavelength, bp336w.throughput, 0)
-
-     bp475w = bpData[nBp+bandDict['F475W']]
-;     synMagGD153f475w = synphot2(modelWl, fluxGD153, bp475w.wavelength, bp475w.throughput, zp[bandDict['F475W']])
-     synMagGD153f475w = synphot2(modelWl, fluxGD153, bp475w.wavelength, bp475w.throughput, 0)
-
-     bp625w = bpData[nBp+bandDict['F625W']]
-;     synMagGD153f625w = synphot2(modelWl, fluxGD153, bp625w.wavelength, bp625w.throughput, zp[bandDict['F625W']])
-     synMagGD153f625w = synphot2(modelWl, fluxGD153, bp625w.wavelength, bp625w.throughput, 0)
-
-     bp775w = bpData[nBp+bandDict['F775W']] 
-     synMagGD153f775w = synphot2(modelWl, fluxGD153, bp775w.wavelength, bp775w.throughput, 0)
-
-     bp160w = bpData[nBp+bandDict['F160W']] 
-     synMagGD153f160w = synphot2(modelWl, fluxGD153, bp160w.wavelength, bp160w.throughput, 0)
-
-     PRINTF, 2 , 'GD153 syn:', synMagGD153f275w, synMagGD153f336w, synMagGD153f475w, synMagGD153f625w, synMagGD153f775w, synMagGD153f160w
-     PRINTF, 2, 'GD153 obs:', obsMagGD153f275w, obsMagGD153f336w, obsMagGD153f475w, obsMagGD153f625w, obsMagGD153f775w, obsMagGD153f160w
-     PRINTF, 2, 'GD153 syn-obs:', synMagGD153f275w - obsMagGD153f275w, synMagGD153f336w - obsMagGD153f336w, synMagGD153f475w - obsMagGD153f475w, synMagGD153f625w - obsMagGD153f625w, synMagGD153f775w - obsMagGD153f775w, synMagGD153f160w - obsMagGD153f160w
+;
+;
 
 ;
 ; Dump zpBand
@@ -218,6 +195,31 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,PLOTSTARS=doPlo
      PRINTF, 2, FORMAT='("zpBand: ",10e12.4)', zpBand
      formatHead = '(A0," ",A0," ",A0," ",A0)'
      PRINTF,2,FORMAT=formatHead, '# id T Torig logg Av sigma u g r i z (observed)', bandListStr,  '(fit-observed)', bandListStr
+;
+; Dump GD153 mags
+;
+     bp275w = bpData[nBp+bandDict['F275W']] 
+     synMagGD153f275w = synphot2(modelWl, fluxGD153, bp275w.wavelength, bp275w.throughput, 0) + zpBand[bandDict['F275W']]
+
+     bp336w = bpData[nBp+bandDict['F336W']] 
+     synMagGD153f336w = synphot2(modelWl, fluxGD153, bp336w.wavelength, bp336w.throughput, 0) + zpBand[bandDict['F336W']]
+
+     bp475w = bpData[nBp+bandDict['F475W']]
+     synMagGD153f475w = synphot2(modelWl, fluxGD153, bp475w.wavelength, bp475w.throughput, 0) + zpBand[bandDict['F475W']]
+
+     bp625w = bpData[nBp+bandDict['F625W']]
+     synMagGD153f625w = synphot2(modelWl, fluxGD153, bp625w.wavelength, bp625w.throughput, 0) + zpBand[bandDict['F625W']]
+
+     bp775w = bpData[nBp+bandDict['F775W']] 
+     synMagGD153f775w = synphot2(modelWl, fluxGD153, bp775w.wavelength, bp775w.throughput, 0) + zpBand[bandDict['F775W']]
+
+     bp160w = bpData[nBp+bandDict['F160W']] 
+     synMagGD153f160w = synphot2(modelWl, fluxGD153, bp160w.wavelength, bp160w.throughput, 0) + zpBand[bandDict['F160W']]
+
+     PRINTF, 2 , 'GD153 syn:', synMagGD153f275w, synMagGD153f336w, synMagGD153f475w, synMagGD153f625w, synMagGD153f775w, synMagGD153f160w
+     PRINTF, 2, 'GD153 obs:', obsMagGD153f275w, obsMagGD153f336w, obsMagGD153f475w, obsMagGD153f625w, obsMagGD153f775w, obsMagGD153f160w
+     PRINTF, 2, 'GD153 syn-obs:', synMagGD153f275w - obsMagGD153f275w, synMagGD153f336w - obsMagGD153f336w, synMagGD153f475w - obsMagGD153f475w, synMagGD153f625w - obsMagGD153f625w, synMagGD153f775w - obsMagGD153f775w, synMagGD153f160w - obsMagGD153f160w
+
 
 ;
 ; Calculate extincted flux
