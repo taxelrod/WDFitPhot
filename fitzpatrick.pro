@@ -27,7 +27,7 @@
 
 
 
-RESTORE,'/home/tsa/Dropbox/WD/GauthamCode/DATA/FITZPATRICK_TOT'            ; R,W,A (1099 points)
+RESTORE,'RunData/FITZPATRICK_TOT'            ; R,W,A (1099 points)
 
 RR = 10*(Rv-2.1)
 R2 = CEIL(RR)

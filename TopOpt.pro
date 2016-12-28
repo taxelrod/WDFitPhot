@@ -79,7 +79,11 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,PLOTSTARS=doPlo
      G0[n-1] = Gret
      EBV0[n-1] = EBVret
      idx = (n-1)*nBpHST
-     HSTObsAll[idx:(idx+nBpHST-1)] = HSTObs - zeropointsHST; these are now instrumental mags
+;     HSTObsAll[idx:(idx+nBpHST-1)] = HSTObs - zeropointsHST; these
+;                                              are now instrumental
+;                                              mags- OLD convention for
+;                                              input mags
+     HSTObsAll[idx:(idx+nBpHST-1)] = HSTObs; these are instrumental mags as input
 ;
 ; Set up covariance matrices, diagonal for now
 ;
