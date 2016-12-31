@@ -6,7 +6,7 @@
 PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,PLOTSTARS=doPlots,DUMPFLUX=fluxFileName
 
   COMMON TopInfo,  nStars, nBp, nBpHST, bpData, bandList, bandDict, zp, Tstars, Gstars, ZpStars, EBV, modelWl, modelFluxes, sampleHST
-  COMMON ZpMinimizeInfo, fitResult, chisqRes, scaleFactor, fluxGD153, obsMagGD153f275w, obsMagGD153f336w, obsMagGD153f475w, obsMagGD153f625w, obsMagGD153f775w, obsMagGD153f160w
+  COMMON ZpMinimizeInfo, fitResult, chisqRes, scaleFactor, fluxGD153, obsMagGD153f275w, obsMagGD153f336w, obsMagGD153f475w, obsMagGD153f625w, obsMagGD153f775w, obsMagGD153f160w, Tlast, Glast
 
   CLOSE,2
   OPENW,2,outFileName
@@ -47,8 +47,15 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,PLOTSTARS=doPlo
   EBV0 = DBLARR(nStars)
   T = DBLARR(nStars)
   G = DBLARR(nStars)
+;
+; These keep track of when T or G changes to optimize performance
+;
+  Tlast = DBLARR(nStars)
+  Glast = DBLARR(nStars)
   
   zpBand = DBLARR(nBpHST)
+
+  modelFluxes = LIST(LENGTH=nStars)
 
 ; Set up the array of zeropoints in the order of the bands in the
 ; input photometry file.
@@ -101,7 +108,7 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,PLOTSTARS=doPlo
 ;
   RESTORE, 'RunData/LSST_filter_template.sav'
   bandPassRoot = 'RunData/SDSS/'
-  bandPasses = ['u','g','r','i','z']
+  bandPasses = ['u','g','r','i']
 
   nBp = SIZE(bandPasses,/N_ELEMENTS)
   bpData = LIST()
@@ -168,7 +175,7 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,PLOTSTARS=doPlo
 ;
      tempGD153 = 38686.
      loggGD153 = 7.66
-     LSST_dump_func, tempGD153, loggGD153, 0, 0, 1.0, 0, modelWl,  fluxGD153
+     GetModelFlux, tempGD153, loggGD153, modelWl,  fluxGD153
 
 ; cycle 20 (paper) system
      ;; obsMagGD153f336w = 11.348 - zeropointsHSTDict['F336W'] ; from GN table
@@ -198,7 +205,7 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,PLOTSTARS=doPlo
      PRINTF, 2, bandListStr
      PRINTF, 2, FORMAT='("zpBand: ",10e12.4)', zpBand
      formatHead = '(A0," ",A0," ",A0," ",A0)'
-     PRINTF,2,FORMAT=formatHead, '# id T Torig logg Av sigma u g r i z (observed)', bandListStr,  '(fit-observed)', bandListStr
+     PRINTF,2,FORMAT=formatHead, '# id T Torig logg Av sigma u g r i (observed)', bandListStr,  '(fit-observed)', bandListStr
 ;
 ; Dump GD153 mags
 ;
@@ -217,8 +224,10 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,PLOTSTARS=doPlo
      bp775w = bpData[nBp+bandDict['F775W']] 
      synMagGD153f775w = synphot2(modelWl, fluxGD153, bp775w.wavelength, bp775w.throughput, 0) + zpBand[bandDict['F775W']]
 
-     bp160w = bpData[nBp+bandDict['F160W']] 
-     synMagGD153f160w = synphot2(modelWl, fluxGD153, bp160w.wavelength, bp160w.throughput, 0) + zpBand[bandDict['F160W']]
+     ;; bp160w = bpData[nBp+bandDict['F160W']] 
+     ;; synMagGD153f160w = synphot2(modelWl, fluxGD153, bp160w.wavelength, bp160w.throughput, 0) + zpBand[bandDict['F160W']]
+     obsMagGD153f160w = -99
+     synMagGD153f160w = -99
 
      PRINTF, 2 , 'GD153 syn:', synMagGD153f275w, synMagGD153f336w, synMagGD153f475w, synMagGD153f625w, synMagGD153f775w, synMagGD153f160w
      PRINTF, 2, 'GD153 obs:', obsMagGD153f275w, obsMagGD153f336w, obsMagGD153f475w, obsMagGD153f625w, obsMagGD153f775w, obsMagGD153f160w
@@ -230,7 +239,7 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,PLOTSTARS=doPlo
 ;
      R = paramsAll(nBPHST-1)
      FOR k = 1, nStars DO BEGIN
-        LSST_dump_func, Tstars[k-1], G0[k-1], 0, EBV[k-1], 1.0, 0, modelWl, modelFluxes[k-1]
+        GetModelFlux, Tstars[k-1], G0[k-1], modelWl, modelFluxes[k-1]
         extincMag = ext_odonnell(modelWl,R)*EBV[k-1]*R
         extinc = 10^(-0.4*extincMag)
         fluxe = modelFluxes[k-1]*extinc

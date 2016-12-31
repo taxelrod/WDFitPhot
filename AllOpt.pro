@@ -10,7 +10,7 @@ FUNCTION ExtinctFuncAll, paramVec
 ; 
   COMMON TopInfo,  nStars, nBp, nBpHST, bpData, bandList, bandDict, zp, Tstars, Gstars, zpStar, EBV, modelWl, modelFluxes, sampleHST
 
-  COMMON ZpMinimizeInfo, fitResult, chisqRes, scaleFactor, fluxGD153, obsMagGD153f275w, obsMagGD153f336w, obsMagGD153f475w, obsMagGD153f625w, obsMagGD153f775w, obsMagGD153f160w
+  COMMON ZpMinimizeInfo, fitResult, chisqRes, scaleFactor, fluxGD153, obsMagGD153f275w, obsMagGD153f336w, obsMagGD153f475w, obsMagGD153f625w, obsMagGD153f775w, obsMagGD153f160w, Tlast, Glast
 
   COMMON ScaleInfo, scaleFactor2, scaleFactor2Inv
 
@@ -25,11 +25,15 @@ FUNCTION ExtinctFuncAll, paramVec
 
   fitResult = DBLARR(nBpHST*nStars)
   synMag = DBLARR(nBpHST*nStars)
-  modelFluxes = LIST()
 
   FOR n = 1, nStars DO BEGIN
-     LSST_dump_func, Tstars[n-1], Gstars[n-1], 0, EBV[n-1], 1.0, 0, modelWL, flux
-     modelFluxes.add, flux
+     IF (Tstars[n-1] ne Tlast[n-1]) or (Gstars[n-1] ne Glast[n-1]) THEN BEGIN
+        GetModelFlux, Tstars[n-1], Gstars[n-1], modelWL, flux
+        modelFluxes[n-1] = flux
+        Tlast[n-1] = Tstars[n-1]
+        Glast[n-1] = Gstars[n-1]
+     ENDIF
+
      extincMag = ext_odonnell(modelWL,R)*EBV[n-1]*R
      extinc = 10^(-0.4*extincMag)
 
@@ -62,16 +66,16 @@ FUNCTION ExtinctFuncAll, paramVec
   bp775w = bpData[nBp+bandDict['F775W']] 
   synMagGD153f775w = synphot2(modelWl, fluxGD153, bp775w.wavelength, bp775w.throughput, 0)
 
-  bp160w = bpData[nBp+bandDict['F160W']] 
-  synMagGD153f160w = synphot2(modelWl, fluxGD153, bp160w.wavelength, bp160w.throughput, 0)
+  ;; bp160w = bpData[nBp+bandDict['F160W']] 
+  ;; synMagGD153f160w = synphot2(modelWl, fluxGD153, bp160w.wavelength, bp160w.throughput, 0)
 
-  GD153delta = DBLARR(6)
+  GD153delta = DBLARR(5)
   GD153delta[0] = synMagGD153f275w - obsMagGD153f275w + zpBand[bandDict['F275W']]
   GD153delta[1] = synMagGD153f336w - obsMagGD153f336w + zpBand[bandDict['F336W']]
   GD153delta[2] = synMagGD153f475w - obsMagGD153f475w + zpBand[bandDict['F475W']]
   GD153delta[3] = synMagGD153f625w - obsMagGD153f625w + zpBand[bandDict['F625W']]
   GD153delta[4] = synMagGD153f775w - obsMagGD153f775w + zpBand[bandDict['F775W']]
-  GD153delta[5] = synMagGD153f160w - obsMagGD153f160w + zpBand[bandDict['F160W']]
+  ;; GD153delta[5] = synMagGD153f160w - obsMagGD153f160w + zpBand[bandDict['F160W']]
 
   GD153red = TOTAL((GD153delta - MEAN(GD153delta))^2) / 0.01^2
 
