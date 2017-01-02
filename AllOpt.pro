@@ -8,11 +8,11 @@ FUNCTION ExtinctFuncAll, paramVec
 ; paramVec - (zp_i, R, Ebv)
 ; vals - synth_mag_{ni} + (zp_i + X_i(R, Ebv_n))
 ; 
-  COMMON TopInfo,  nStars, nBp, nBpHST, bpData, bandList, bandDict, zp, Tstars, Gstars, zpStar, EBV, modelWl, modelFluxes, sampleHST
+  COMMON TopInfo,  nStars, nBp, nBpHST, bpData, bandList, bandDict, zp, Tstars, TMinStars, TMaxStars, Gstars, GMinStars, GMaxStars, zpStar, EBV, modelWl, modelFluxes, sampleHST
 
   COMMON ZpMinimizeInfo, fitResult, chisqRes, scaleFactor, fluxGD153, obsMagGD153f275w, obsMagGD153f336w, obsMagGD153f475w, obsMagGD153f625w, obsMagGD153f775w, obsMagGD153f160w
 
-  COMMON ScaleInfo, scaleFactor2, scaleFactor2Inv
+  COMMON ScaleInfo, scaleFactor2, scaleFactor2Inv, scaleFactor3, scaleFactor3Inv
 
 
   zpBand = DBLARR(nBpHST)
@@ -22,6 +22,7 @@ FUNCTION ExtinctFuncAll, paramVec
   EBV = scaleFactor*paramVec(nBpHST:(nBpHST+nStars-1))
   zpStar = scaleFactor*paramVec((nBpHST+nStars):(nBpHST+2*nStars-1))
   Tstars = scaleFactor2*paramVec((nBpHST+2*nStars):(nBpHST+3*nStars-1))
+  Gstars = scaleFactor3*paramVec((nBpHST+3*nStars):(nBpHST+4*nStars-1))
 
   fitResult = DBLARR(nBpHST*nStars)
   synMag = DBLARR(nBpHST*nStars)
@@ -89,15 +90,13 @@ FUNCTION AllOpt, FIXEDRV=fixedRv
 ;* samples from multiD gaussian distribution and calls LSST_dump_func
 ;
 ;***************************************************************************
-  COMMON TopInfo,  nStars, nBp, nBpHST, bpData, bandList, bandDict, zp, Tstars, Gstars, zpStar, EBV, modelWl, modelFluxes, sampleHST
-
-  COMMON ZpMinimizeInfo, fitResult, chisqRes, scaleFactor, fluxGD153, obsMagGD153f336w, obsMagGD153f475w, obsMagGD153f625w
-
-  COMMON ScaleInfo, scaleFactor2, scaleFactor2Inv
+  COMMON TopInfo,  nStars, nBp, nBpHST, bpData, bandList, bandDict, zp, Tstars, TMinStars, TMaxStars, Gstars, GMinStars, GMaxStars, zpStar, EBV, modelWl, modelFluxes, sampleHST
+  COMMON ZpMinimizeInfo, fitResult, chisqRes, scaleFactor, fluxGD153, obsMagGD153f275w, obsMagGD153f336w, obsMagGD153f475w, obsMagGD153f625w, obsMagGD153f775w, obsMagGD153f160w
+  COMMON ScaleInfo, scaleFactor2, scaleFactor2Inv, scaleFactor3, scaleFactor3Inv
 
   
-  nParams = nStars+nBpHST+nStars+nStars
-  params = DBLARR(nParams)      ; Av for each star, zp offset for each band (sum to zero), R, zp for each star, temp for each star
+  nParams = nStars+nBpHST+nStars+nStars+nStars
+  params = DBLARR(nParams)      ; Av for each star, zp offset for each band (sum to zero), R, zp for each star, temp for each star, logg for each star
   paramsUB = REPLICATE(1.0e30, nParams)
   paramsLB = REPLICATE(-1.0e30, nParams)
 
@@ -106,6 +105,9 @@ FUNCTION AllOpt, FIXEDRV=fixedRv
 
   scaleFactor2 = 1.0e6           
   scaleFactor2Inv = 1./scaleFactor2
+
+  scaleFactor3 = 1.0e2
+  scaleFactor3Inv = 1./scaleFactor3
 ;
 ; Fit for zeropoint, ebv and (maybe) R
 ;
@@ -114,9 +116,13 @@ FUNCTION AllOpt, FIXEDRV=fixedRv
      params((nBpHST+nStars):(nBpHST+2*nStars-1)) = 0
      params((nBpHST+nStars):(nBpHST+2*nStars-1)) = scaleFactorInv*zpStar
      params((nBpHST+2*nStars):(nBpHST+3*nStars-1)) = scaleFactor2Inv*Tstars  ; temp for each star
+     params((nBpHST+3*nStars):(nBpHST+4*nStars-1)) = scaleFactor3Inv*Gstars  ; logg for each star
 
-     paramsLB((nBpHST+2*nStars):(nBpHST+3*nStars-1)) = scaleFactor2Inv*Tstars  ; Don't allow temp to vary
-     paramsUB((nBpHST+2*nStars):(nBpHST+3*nStars-1)) = scaleFactor2Inv*Tstars  
+     paramsLB((nBpHST+2*nStars):(nBpHST+3*nStars-1)) = scaleFactor2Inv*TMinStars 
+     paramsUB((nBpHST+2*nStars):(nBpHST+3*nStars-1)) = scaleFactor2Inv*TMaxStars  
+
+     paramsLB((nBpHST+3*nStars):(nBpHST+4*nStars-1)) = scaleFactor3Inv*GMinStars 
+     paramsUB((nBpHST+3*nStars):(nBpHST+4*nStars-1)) = scaleFactor3Inv*GMaxStars  
 
      IF KEYWORD_SET(FixedRv) THEN BEGIN
         params(nBPHST-1) = FixedRv
@@ -148,6 +154,9 @@ FUNCTION AllOpt, FIXEDRV=fixedRv
      
      EBV = scalefactor*params[nBPHST:(nBpHST+nStars-1)]
      R = params[nBpHST-1]
+
+     Tstars = scalefactor2*params((nBpHST+2*nStars):(nBpHST+3*nStars-1))
+     Gstars = scalefactor3*params((nBpHST+3*nStars):(nBpHST+4*nStars-1))
 
      FOR k = 1, nStars DO BEGIN
         idx = (k-1)*nBpHST
