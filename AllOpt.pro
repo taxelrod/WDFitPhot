@@ -10,7 +10,7 @@ FUNCTION ExtinctFuncAll, paramVec
 ; 
   COMMON TopInfo,  nStars, nBp, nBpHST, bpData, bandList, bandDict, zp, Tstars, TMinStars, TMaxStars, Gstars, GMinStars, GMaxStars, zpStar, EBV, modelWl, modelFluxes, sampleHST
 
-  COMMON ZpMinimizeInfo, fitResult, chisqRes, scaleFactor, fluxGD153, obsMagGD153f275w, obsMagGD153f336w, obsMagGD153f475w, obsMagGD153f625w, obsMagGD153f775w, obsMagGD153f160w
+  COMMON ZpMinimizeInfo, fitResult, chisqRes, scaleFactor, idRS, fluxRS, obsMagRS
 
   COMMON ScaleInfo, scaleFactor2, scaleFactor2Inv, scaleFactor3, scaleFactor3Inv
 
@@ -43,42 +43,50 @@ FUNCTION ExtinctFuncAll, paramVec
      ENDFOR
   ENDFOR
 
-; Stddev of GD153 mags as proxy for reddening
+; Stddev of RS mags as proxy for reddening
 ;
+  fluxRS = modelFluxes[idRS-1]
+
   bp275w = bpData[nBp+bandDict['F275W']] 
-  synMagGD153f275w = synphot2(modelWl, fluxGD153, bp275w.wavelength, bp275w.throughput, 0)
+  synMagRSf275w = synphot2(modelWl, fluxRS, bp275w.wavelength, bp275w.throughput, 0)
+  obsMagRSf275w = obsMagRS[bandDict['F275W']]
 
   bp336w = bpData[nBp+bandDict['F336W']]
-;  synMagGD153f336w = synphot2(modelWl, fluxGD153, bp336w.wavelength, bp336w.throughput, zpBand[bandDict['F336W']])
-  synMagGD153f336w = synphot2(modelWl, fluxGD153, bp336w.wavelength, bp336w.throughput, 0)
+;  synMagRSf336w = synphot2(modelWl, fluxRS, bp336w.wavelength, bp336w.throughput, zpBand[bandDict['F336W']])
+  synMagRSf336w = synphot2(modelWl, fluxRS, bp336w.wavelength, bp336w.throughput, 0)
+  obsMagRSf336w = obsMagRS[bandDict['F336W']]
 
   bp475w = bpData[nBp+bandDict['F475W']]
-;  synMagGD153f475w = synphot2(modelWl, fluxGD153, bp475w.wavelength, bp475w.throughput, zpBand[bandDict['F475W']])
-  synMagGD153f475w = synphot2(modelWl, fluxGD153, bp475w.wavelength, bp475w.throughput, 0)
+;  synMagRSf475w = synphot2(modelWl, fluxRS, bp475w.wavelength, bp475w.throughput, zpBand[bandDict['F475W']])
+  synMagRSf475w = synphot2(modelWl, fluxRS, bp475w.wavelength, bp475w.throughput, 0)
+  obsMagRSf475w = obsMagRS[bandDict['F475W']]
 
   bp625w = bpData[nBp+bandDict['F625W']]
-;  synMagGD153f625w = synphot2(modelWl, fluxGD153, bp625w.wavelength, bp625w.throughput, zpBand[bandDict['F625W']])
-  synMagGD153f625w = synphot2(modelWl, fluxGD153, bp625w.wavelength, bp625w.throughput, 0)
+;  synMagRSf625w = synphot2(modelWl, fluxRS, bp625w.wavelength, bp625w.throughput, zpBand[bandDict['F625W']])
+  synMagRSf625w = synphot2(modelWl, fluxRS, bp625w.wavelength, bp625w.throughput, 0)
+  obsMagRSf625w = obsMagRS[bandDict['F625W']]
 
   bp775w = bpData[nBp+bandDict['F775W']] 
-  synMagGD153f775w = synphot2(modelWl, fluxGD153, bp775w.wavelength, bp775w.throughput, 0)
+  synMagRSf775w = synphot2(modelWl, fluxRS, bp775w.wavelength, bp775w.throughput, 0)
+  obsMagRSf775w = obsMagRS[bandDict['F775W']]
 
   bp160w = bpData[nBp+bandDict['F160W']] 
-  synMagGD153f160w = synphot2(modelWl, fluxGD153, bp160w.wavelength, bp160w.throughput, 0)
+  synMagRSf160w = synphot2(modelWl, fluxRS, bp160w.wavelength, bp160w.throughput, 0)
+  obsMagRSf160w = obsMagRS[bandDict['F160W']]
 
-  GD153delta = DBLARR(6)
-  GD153delta[0] = synMagGD153f275w - obsMagGD153f275w + zpBand[bandDict['F275W']]
-  GD153delta[1] = synMagGD153f336w - obsMagGD153f336w + zpBand[bandDict['F336W']]
-  GD153delta[2] = synMagGD153f475w - obsMagGD153f475w + zpBand[bandDict['F475W']]
-  GD153delta[3] = synMagGD153f625w - obsMagGD153f625w + zpBand[bandDict['F625W']]
-  GD153delta[4] = synMagGD153f775w - obsMagGD153f775w + zpBand[bandDict['F775W']]
-  GD153delta[5] = synMagGD153f160w - obsMagGD153f160w + zpBand[bandDict['F160W']]
+  RSdelta = DBLARR(6)
+  RSdelta[0] = synMagRSf275w - obsMagRSf275w + zpBand[bandDict['F275W']]
+  RSdelta[1] = synMagRSf336w - obsMagRSf336w + zpBand[bandDict['F336W']]
+  RSdelta[2] = synMagRSf475w - obsMagRSf475w + zpBand[bandDict['F475W']]
+  RSdelta[3] = synMagRSf625w - obsMagRSf625w + zpBand[bandDict['F625W']]
+  RSdelta[4] = synMagRSf775w - obsMagRSf775w + zpBand[bandDict['F775W']]
+  RSdelta[5] = synMagRSf160w - obsMagRSf160w + zpBand[bandDict['F160W']]
 
-  GD153red = TOTAL((GD153delta - MEAN(GD153delta))^2) / 0.01^2
+  RSred = TOTAL((RSdelta - MEAN(RSdelta))^2) / 0.01^2
 
-  chisqRes = TOTAL((sampleHST - fitResult)^2) + GD153red
+  chisqRes = TOTAL((sampleHST - fitResult)^2) + RSred
   PRINT, paramVec
-  PRINT, 'chisq:', chisqRes, GD153red
+  PRINT, 'chisq:', chisqRes, RSred
   RETURN, chisqRes
 END
 
@@ -91,7 +99,7 @@ FUNCTION AllOpt, FIXEDRV=fixedRv
 ;
 ;***************************************************************************
   COMMON TopInfo,  nStars, nBp, nBpHST, bpData, bandList, bandDict, zp, Tstars, TMinStars, TMaxStars, Gstars, GMinStars, GMaxStars, zpStar, EBV, modelWl, modelFluxes, sampleHST
-  COMMON ZpMinimizeInfo, fitResult, chisqRes, scaleFactor, fluxGD153, obsMagGD153f275w, obsMagGD153f336w, obsMagGD153f475w, obsMagGD153f625w, obsMagGD153f775w, obsMagGD153f160w
+  COMMON ZpMinimizeInfo, fitResult, chisqRes, scaleFactor, idRS, fluxRS, obsMagRS
   COMMON ScaleInfo, scaleFactor2, scaleFactor2Inv, scaleFactor3, scaleFactor3Inv
 
   

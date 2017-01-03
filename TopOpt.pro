@@ -6,7 +6,9 @@
 PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,PLOTSTARS=doPlots,DUMPFLUX=fluxFileName
 
   COMMON TopInfo,  nStars, nBp, nBpHST, bpData, bandList, bandDict, zp, Tstars, TMinStars, TMaxStars, Gstars, GMinStars, GMaxStars, zpStar, EBV, modelWl, modelFluxes, sampleHST
-  COMMON ZpMinimizeInfo, fitResult, chisqRes, scaleFactor, fluxGD153, obsMagGD153f275w, obsMagGD153f336w, obsMagGD153f475w, obsMagGD153f625w, obsMagGD153f775w, obsMagGD153f160w
+  COMMON ZpMinimizeInfo, fitResult, chisqRes, scaleFactor, idRS, fluxRS, obsMagRS
+
+  RSStar = 'G191B2B'
 
   CLOSE,2
   OPENW,2,outFileName
@@ -77,9 +79,10 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,PLOTSTARS=doPlo
   ENDFOR
 ;
 ; Now read in the per star info
-;    
+; 
   FOR n = 1, nStars DO BEGIN
      read_WDDATA,starFile,starList[n-1],Tret,Gret,EBVret,HSTObs,HSTObsUnc,sigmaT,sigmaG,bandList
+     IF starList[n-1] eq RSStar THEN idRS = n
      TStars[n-1] = Tret
      TMinStars[n-1] = Tret - sigmaT
      TMaxStars[n-1] = Tret + sigmaT
@@ -101,6 +104,8 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,PLOTSTARS=doPlo
      covarTG[*, *, n-1] = DIAG_MATRIX([sigmaT^2, sigmaG^2])
      covarHST[*, *, n-1] = DIAG_MATRIX(HSTObsUnc^2)
   ENDFOR
+
+  PRINTF, 2, 'IDRS=', idRS
 ;
 ; set up AB standard flux
 ;
@@ -168,24 +173,13 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,PLOTSTARS=doPlo
      EBV = EBV0
      zp = DBLARR(nBpHST)
 ;
-; Use GD153 as a reddening constraint; T and logg from Bohlin
+; Use RSStar as a reddening constraint
 ;
-     tempGD153 = 38686.
-     loggGD153 = 7.66
-     LSST_dump_func, tempGD153, loggGD153, 0, 0, 1.0, 0, modelWl,  fluxGD153
-
-; cycle 20 (paper) system
-     ;; obsMagGD153f336w = 11.348 - zeropointsHSTDict['F336W'] ; from GN table
-     ;; obsMagGD153f475w = 13.182 - zeropointsHSTDict['F475W'] ; from GN table
-     ;; obsMagGD153f625w = 13.455 - zeropointsHSTDict['F625W'] ; from GN table
-
-; cycle 22 instrumental mags
-     obsMagGD153f275w = -11.85745
-     obsMagGD153f336w = -12.02242
-     obsMagGD153f475w = -12.47516
-     obsMagGD153f625w = -11.80634
-     obsMagGD153f775w = -10.71429 
-     obsMagGD153f160w = -10.39641
+     idx = (idRS-1)*nBpHST
+     obsMagRS = HSTObsAll[idx:(idx+nBpHST-1)]
+     tempRS = Tstars[idRS-1]
+     loggRS = Gstars[idRS-1]
+     LSST_dump_func, tempRS, loggRS, 0, 0, 1.0, 0, modelWl,  fluxRS
 ;
 ; OPTIMIZER CALL    
 ; 
@@ -203,29 +197,35 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,PLOTSTARS=doPlo
      PRINTF, 2, FORMAT='("zpBand: ",10e12.4)', zpBand
 
 ;
-; Dump GD153 mags
+; Dump RS mags
 ;
      bp275w = bpData[nBp+bandDict['F275W']] 
-     synMagGD153f275w = synphot2(modelWl, fluxGD153, bp275w.wavelength, bp275w.throughput, 0) + zpBand[bandDict['F275W']]
+     synMagRSf275w = synphot2(modelWl, fluxRS, bp275w.wavelength, bp275w.throughput, 0) + zpBand[bandDict['F275W']]
+     obsMagRSf275w = obsMagRS[bandDict['F275W']]
 
      bp336w = bpData[nBp+bandDict['F336W']] 
-     synMagGD153f336w = synphot2(modelWl, fluxGD153, bp336w.wavelength, bp336w.throughput, 0) + zpBand[bandDict['F336W']]
+     synMagRSf336w = synphot2(modelWl, fluxRS, bp336w.wavelength, bp336w.throughput, 0) + zpBand[bandDict['F336W']]
+     obsMagRSf336w = obsMagRS[bandDict['F336W']]
 
      bp475w = bpData[nBp+bandDict['F475W']]
-     synMagGD153f475w = synphot2(modelWl, fluxGD153, bp475w.wavelength, bp475w.throughput, 0) + zpBand[bandDict['F475W']]
+     synMagRSf475w = synphot2(modelWl, fluxRS, bp475w.wavelength, bp475w.throughput, 0) + zpBand[bandDict['F475W']]
+     obsMagRSf475w = obsMagRS[bandDict['F475W']]
 
      bp625w = bpData[nBp+bandDict['F625W']]
-     synMagGD153f625w = synphot2(modelWl, fluxGD153, bp625w.wavelength, bp625w.throughput, 0) + zpBand[bandDict['F625W']]
+     synMagRSf625w = synphot2(modelWl, fluxRS, bp625w.wavelength, bp625w.throughput, 0) + zpBand[bandDict['F625W']]
+     obsMagRSf625w = obsMagRS[bandDict['F625W']]
 
      bp775w = bpData[nBp+bandDict['F775W']] 
-     synMagGD153f775w = synphot2(modelWl, fluxGD153, bp775w.wavelength, bp775w.throughput, 0) + zpBand[bandDict['F775W']]
+     synMagRSf775w = synphot2(modelWl, fluxRS, bp775w.wavelength, bp775w.throughput, 0) + zpBand[bandDict['F775W']]
+     obsMagRSf775w = obsMagRS[bandDict['F775W']]
 
      bp160w = bpData[nBp+bandDict['F160W']] 
-     synMagGD153f160w = synphot2(modelWl, fluxGD153, bp160w.wavelength, bp160w.throughput, 0) + zpBand[bandDict['F160W']]
+     synMagRSf160w = synphot2(modelWl, fluxRS, bp160w.wavelength, bp160w.throughput, 0) + zpBand[bandDict['F160W']]
+     obsMagRSf160w = obsMagRS[bandDict['F160W']]
 
-     PRINTF, 2 , 'GD153 syn:', synMagGD153f275w, synMagGD153f336w, synMagGD153f475w, synMagGD153f625w, synMagGD153f775w, synMagGD153f160w
-     PRINTF, 2, 'GD153 obs:', obsMagGD153f275w, obsMagGD153f336w, obsMagGD153f475w, obsMagGD153f625w, obsMagGD153f775w, obsMagGD153f160w
-     PRINTF, 2, 'GD153 syn-obs:', synMagGD153f275w - obsMagGD153f275w, synMagGD153f336w - obsMagGD153f336w, synMagGD153f475w - obsMagGD153f475w, synMagGD153f625w - obsMagGD153f625w, synMagGD153f775w - obsMagGD153f775w, synMagGD153f160w - obsMagGD153f160w
+     PRINTF, 2 , 'RS syn:', synMagRSf275w, synMagRSf336w, synMagRSf475w, synMagRSf625w, synMagRSf775w, synMagRSf160w
+     PRINTF, 2, 'RS obs:', obsMagRSf275w, obsMagRSf336w, obsMagRSf475w, obsMagRSf625w, obsMagRSf775w, obsMagRSf160w
+     PRINTF, 2, 'RS syn-obs:', synMagRSf275w - obsMagRSf275w, synMagRSf336w - obsMagRSf336w, synMagRSf475w - obsMagRSf475w, synMagRSf625w - obsMagRSf625w, synMagRSf775w - obsMagRSf775w, synMagRSf160w - obsMagRSf160w
 
      formatHead = '(A0," ",A0," ",A0," ",A0)'
      PRINTF,2,FORMAT=formatHead, '# id T Torig logg loggorig Av sigma u g r i z (observed)', bandListStr,  '(fit-observed)', bandListStr
