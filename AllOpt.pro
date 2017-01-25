@@ -45,44 +45,48 @@ FUNCTION ExtinctFuncAll, paramVec
 
 ; Stddev of RS mags as proxy for reddening
 ;
-  fluxRS = modelFluxes[idRS-1]
+  IF idRS NE !NULL THEN BEGIN
+     fluxRS = modelFluxes[idRS-1]
 
-  bp275w = bpData[nBp+bandDict['F275W']] 
-  synMagRSf275w = synphot2(modelWl, fluxRS, bp275w.wavelength, bp275w.throughput, 0)
-  obsMagRSf275w = obsMagRS[bandDict['F275W']]
+     bp275w = bpData[nBp+bandDict['F275W']] 
+     synMagRSf275w = synphot2(modelWl, fluxRS, bp275w.wavelength, bp275w.throughput, 0)
+     obsMagRSf275w = obsMagRS[bandDict['F275W']]
 
-  bp336w = bpData[nBp+bandDict['F336W']]
+     bp336w = bpData[nBp+bandDict['F336W']]
 ;  synMagRSf336w = synphot2(modelWl, fluxRS, bp336w.wavelength, bp336w.throughput, zpBand[bandDict['F336W']])
-  synMagRSf336w = synphot2(modelWl, fluxRS, bp336w.wavelength, bp336w.throughput, 0)
-  obsMagRSf336w = obsMagRS[bandDict['F336W']]
+     synMagRSf336w = synphot2(modelWl, fluxRS, bp336w.wavelength, bp336w.throughput, 0)
+     obsMagRSf336w = obsMagRS[bandDict['F336W']]
 
-  bp475w = bpData[nBp+bandDict['F475W']]
+     bp475w = bpData[nBp+bandDict['F475W']]
 ;  synMagRSf475w = synphot2(modelWl, fluxRS, bp475w.wavelength, bp475w.throughput, zpBand[bandDict['F475W']])
-  synMagRSf475w = synphot2(modelWl, fluxRS, bp475w.wavelength, bp475w.throughput, 0)
-  obsMagRSf475w = obsMagRS[bandDict['F475W']]
+     synMagRSf475w = synphot2(modelWl, fluxRS, bp475w.wavelength, bp475w.throughput, 0)
+     obsMagRSf475w = obsMagRS[bandDict['F475W']]
 
-  bp625w = bpData[nBp+bandDict['F625W']]
+     bp625w = bpData[nBp+bandDict['F625W']]
 ;  synMagRSf625w = synphot2(modelWl, fluxRS, bp625w.wavelength, bp625w.throughput, zpBand[bandDict['F625W']])
-  synMagRSf625w = synphot2(modelWl, fluxRS, bp625w.wavelength, bp625w.throughput, 0)
-  obsMagRSf625w = obsMagRS[bandDict['F625W']]
+     synMagRSf625w = synphot2(modelWl, fluxRS, bp625w.wavelength, bp625w.throughput, 0)
+     obsMagRSf625w = obsMagRS[bandDict['F625W']]
 
-  bp775w = bpData[nBp+bandDict['F775W']] 
-  synMagRSf775w = synphot2(modelWl, fluxRS, bp775w.wavelength, bp775w.throughput, 0)
-  obsMagRSf775w = obsMagRS[bandDict['F775W']]
+     bp775w = bpData[nBp+bandDict['F775W']] 
+     synMagRSf775w = synphot2(modelWl, fluxRS, bp775w.wavelength, bp775w.throughput, 0)
+     obsMagRSf775w = obsMagRS[bandDict['F775W']]
 
-  bp160w = bpData[nBp+bandDict['F160W']] 
-  synMagRSf160w = synphot2(modelWl, fluxRS, bp160w.wavelength, bp160w.throughput, 0)
-  obsMagRSf160w = obsMagRS[bandDict['F160W']]
+     bp160w = bpData[nBp+bandDict['F160W']] 
+     synMagRSf160w = synphot2(modelWl, fluxRS, bp160w.wavelength, bp160w.throughput, 0)
+     obsMagRSf160w = obsMagRS[bandDict['F160W']]
 
-  RSdelta = DBLARR(6)
-  RSdelta[0] = synMagRSf275w - obsMagRSf275w + zpBand[bandDict['F275W']]
-  RSdelta[1] = synMagRSf336w - obsMagRSf336w + zpBand[bandDict['F336W']]
-  RSdelta[2] = synMagRSf475w - obsMagRSf475w + zpBand[bandDict['F475W']]
-  RSdelta[3] = synMagRSf625w - obsMagRSf625w + zpBand[bandDict['F625W']]
-  RSdelta[4] = synMagRSf775w - obsMagRSf775w + zpBand[bandDict['F775W']]
-  RSdelta[5] = synMagRSf160w - obsMagRSf160w + zpBand[bandDict['F160W']]
+     RSdelta = DBLARR(6)
+     RSdelta[0] = synMagRSf275w - obsMagRSf275w + zpBand[bandDict['F275W']]
+     RSdelta[1] = synMagRSf336w - obsMagRSf336w + zpBand[bandDict['F336W']]
+     RSdelta[2] = synMagRSf475w - obsMagRSf475w + zpBand[bandDict['F475W']]
+     RSdelta[3] = synMagRSf625w - obsMagRSf625w + zpBand[bandDict['F625W']]
+     RSdelta[4] = synMagRSf775w - obsMagRSf775w + zpBand[bandDict['F775W']]
+     RSdelta[5] = synMagRSf160w - obsMagRSf160w + zpBand[bandDict['F160W']]
 
-  RSred = TOTAL((RSdelta - MEAN(RSdelta))^2) / 0.01^2
+     RSred = TOTAL((RSdelta - MEAN(RSdelta))^2) / 0.01^2
+  ENDIF ELSE BEGIN
+     RSred = 0
+  ENDELSE
 
   chisqRes = TOTAL((sampleHST - fitResult)^2) + RSred
   PRINT, paramVec
@@ -91,7 +95,7 @@ FUNCTION ExtinctFuncAll, paramVec
 END
 
 
-FUNCTION AllOpt, FIXEDRV=fixedRv
+FUNCTION AllOpt, FIXEDRV=fixedRv, FIXEDZP=zplist
 
 ;
 ;****************************************************************************
@@ -119,13 +123,17 @@ FUNCTION AllOpt, FIXEDRV=fixedRv
 ;
 ; Fit for zeropoint, ebv and (maybe) R
 ;
-     params(0:(nBpHST-2)) = scaleFactorInv*0 ; delta zp for each band
+     params(0:(nBpHST-2)) = scaleFactorInv*zp(0:(nBpHST-2)) ; delta zp for each band
      params(nBpHST:(nBpHST+nStars-1)) = scaleFactorInv*EBV ; scaleFactor*EBV for each star
      params((nBpHST+nStars):(nBpHST+2*nStars-1)) = 0
      params((nBpHST+nStars):(nBpHST+2*nStars-1)) = scaleFactorInv*zpStar
      params((nBpHST+2*nStars):(nBpHST+3*nStars-1)) = scaleFactor2Inv*Tstars  ; temp for each star
      params((nBpHST+3*nStars):(nBpHST+4*nStars-1)) = scaleFactor3Inv*Gstars  ; logg for each star
 
+  IF KEYWORD_SET(zplist) THEN BEGIN
+     paramsLB(0:(nBpHST-2)) = scaleFactorInv*zp(0:(nBpHST-2))
+     paramsUB(0:(nBpHST-2)) = scaleFactorInv*zp(0:(nBpHST-2))
+  ENDIF
      paramsLB((nBpHST+2*nStars):(nBpHST+3*nStars-1)) = scaleFactor2Inv*TMinStars 
      paramsUB((nBpHST+2*nStars):(nBpHST+3*nStars-1)) = scaleFactor2Inv*TMaxStars  
 

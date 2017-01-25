@@ -1,14 +1,27 @@
 ;
 ; This is the top level sequencer for the optimization
 ;
+; Note, if zplist is given, the reddening constraint star is ignored.
+; Also, starList should have only a single star
+;
 
-
-PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,PLOTSTARS=doPlots,DUMPFLUX=fluxFileName
+PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,FIXEDZP=zplist,PLOTSTARS=doPlots,DUMPFLUX=fluxFileName
 
   COMMON TopInfo,  nStars, nBp, nBpHST, bpData, bandList, bandDict, zp, Tstars, TMinStars, TMaxStars, Gstars, GMinStars, GMaxStars, zpStar, EBV, modelWl, modelFluxes, sampleHST
   COMMON ZpMinimizeInfo, fitResult, chisqRes, scaleFactor, idRS, fluxRS, obsMagRS
 
-  RSStar = 'G191B2B'
+  IF KEYWORD_SET(zplist) THEN BEGIN
+     RSStar = ''
+     nStars = N_ELEMENTS(starList)
+     IF nStars NE 1 THEN BEGIN
+        PRINT, 'When ZP is given, starList can have only one star'
+        RETURN
+     ENDIF
+     
+  ENDIF ELSE BEGIN
+     RSStar = 'G191B2B'
+  ENDELSE
+
 
   CLOSE,2
   OPENW,2,outFileName
@@ -82,7 +95,11 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,PLOTSTARS=doPlo
 ; 
   FOR n = 1, nStars DO BEGIN
      read_WDDATA,starFile,starList[n-1],Tret,Gret,EBVret,HSTObs,HSTObsUnc,sigmaT,sigmaG,bandList
-     IF starList[n-1] eq RSStar THEN idRS = n
+     IF starList[n-1] eq RSStar THEN BEGIN
+        idRS = n
+        PRINTF, 2, 'IDRS=', idRS
+     ENDIF
+
      TStars[n-1] = Tret
      TMinStars[n-1] = Tret - sigmaT
      TMaxStars[n-1] = Tret + sigmaT
@@ -104,8 +121,6 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,PLOTSTARS=doPlo
      covarTG[*, *, n-1] = DIAG_MATRIX([sigmaT^2, sigmaG^2])
      covarHST[*, *, n-1] = DIAG_MATRIX(HSTObsUnc^2)
   ENDFOR
-
-  PRINTF, 2, 'IDRS=', idRS
 ;
 ; set up AB standard flux
 ;
@@ -156,9 +171,6 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,PLOTSTARS=doPlo
 
   format1 = '($,A20,7(e12.4))'
   format2 = '($,e14.6)'
-
-  
- 
   
   bandMag = DBLARR(nBP+nBpHST)
   FOR n = 1, nSample DO BEGIN
@@ -171,19 +183,28 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,PLOTSTARS=doPlo
 ;
      ZpStars = DBLARR(nStars)
      EBV = EBV0
+
+  IF KEYWORD_SET(zplist) THEN BEGIN
+     zp = zplist
+  ENDIF ELSE BEGIN
      zp = DBLARR(nBpHST)
+  ENDELSE
+
 ;
 ; Use RSStar as a reddening constraint
 ;
+  IF idRS NE !NULL THEN BEGIN
      idx = (idRS-1)*nBpHST
      obsMagRS = HSTObsAll[idx:(idx+nBpHST-1)]
      tempRS = Tstars[idRS-1]
      loggRS = Gstars[idRS-1]
      LSST_dump_func, tempRS, loggRS, 0, 0, 1.0, 0, modelWl,  fluxRS
+  ENDIF
+
 ;
 ; OPTIMIZER CALL    
 ; 
-     paramsAll = AllOpt(FIXEDRV=fixedRv)
+     paramsAll = AllOpt(FIXEDRV=fixedRv,FIXEDZP=zplist)
 ;
 ;
 
@@ -199,6 +220,7 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,PLOTSTARS=doPlo
 ;
 ; Dump RS mags
 ;
+  IF idRS NE !NULL THEN BEGIN
      bp275w = bpData[nBp+bandDict['F275W']] 
      synMagRSf275w = synphot2(modelWl, fluxRS, bp275w.wavelength, bp275w.throughput, 0) + zpBand[bandDict['F275W']]
      obsMagRSf275w = obsMagRS[bandDict['F275W']]
@@ -226,6 +248,7 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,PLOTSTARS=doPlo
      PRINTF, 2 , 'RS syn:', synMagRSf275w, synMagRSf336w, synMagRSf475w, synMagRSf625w, synMagRSf775w, synMagRSf160w
      PRINTF, 2, 'RS obs:', obsMagRSf275w, obsMagRSf336w, obsMagRSf475w, obsMagRSf625w, obsMagRSf775w, obsMagRSf160w
      PRINTF, 2, 'RS syn-obs:', synMagRSf275w - obsMagRSf275w, synMagRSf336w - obsMagRSf336w, synMagRSf475w - obsMagRSf475w, synMagRSf625w - obsMagRSf625w, synMagRSf775w - obsMagRSf775w, synMagRSf160w - obsMagRSf160w
+  ENDIF
 
      formatHead = '(A0," ",A0," ",A0," ",A0)'
      PRINTF,2,FORMAT=formatHead, '# id T Torig logg loggorig Av sigma u g r i z (observed)', bandListStr,  '(fit-observed)', bandListStr
