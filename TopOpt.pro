@@ -59,10 +59,12 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,FIXEDZP=zplist,
   SampleHST = DBLARR(nBpHST*nStars)
   EBV0 = DBLARR(nStars)
   TStars = DBLARR(nStars)
+  TNominal = DBLARR(nStars)
   TMinStars = DBLARR(nStars)
   TMaxStars = DBLARR(nStars)
   Torig = DBLARR(nStars)
   GStars = DBLARR(nStars)
+  GNominal = DBLARR(nStars)
   GMinStars = DBLARR(nStars)
   GMaxStars = DBLARR(nStars)
   Gorig = DBLARR(nStars)
@@ -100,13 +102,13 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,FIXEDZP=zplist,
         PRINTF, 2, 'IDRS=', idRS
      ENDIF
 
-     TStars[n-1] = Tret
-     TMinStars[n-1] = Tret - sigmaT
-     TMaxStars[n-1] = Tret + sigmaT
+     TNominal[n-1] = Tret
+     TMinStars[n-1] = Tret - 2*sigmaT
+     TMaxStars[n-1] = Tret + 2*sigmaT
      Torig[n-1] = Tret
-     GStars[n-1] = Gret
-     GMinStars[n-1] = Gret - sigmaG
-     GMaxStars[n-1] = Gret + sigmaG
+     GNominal[n-1] = Gret
+     GMinStars[n-1] = Gret - 2*sigmaG
+     GMaxStars[n-1] = Gret + 2*sigmaG
      Gorig[n-1] = Gret
      EBV0[n-1] = EBVret
      idx = (n-1)*nBpHST
@@ -177,6 +179,9 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,FIXEDZP=zplist,
      FOR k = 1, nStars DO BEGIN
         idx = (k-1)*nBpHST
         sampleHST(idx:(idx+nBpHST-1)) = mrandomn(undef, covarHST[*,*,k-1]) + HSTObsAll(idx:(idx+nBpHST-1))
+        randomTG = mrandomn(undef, covarTG[*,*,k-1])
+        TStars = TNominal + randomTG(0)
+        GStars = GNominal + randomTG(1)
      ENDFOR
 ;
 ; initial guesses for ZpStar and EBV
@@ -184,6 +189,7 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,FIXEDZP=zplist,
      ZpStars = DBLARR(nStars)
      EBV = EBV0
 
+     
   IF KEYWORD_SET(zplist) THEN BEGIN
      zp = zplist
   ENDIF ELSE BEGIN
