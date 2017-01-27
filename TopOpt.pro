@@ -183,6 +183,10 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,FIXEDZP=zplist,
         TStars = TNominal + randomTG(0)
         GStars = GNominal + randomTG(1)
      ENDFOR
+     
+     Torig = Tstars
+     Gorig = Gstars
+     
 ;
 ; initial guesses for ZpStar and EBV
 ;
@@ -262,6 +266,8 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,FIXEDZP=zplist,
 ; Calculate extincted flux
 ;
      R = paramsAll(nBPHST-1)
+     PRINTF,2,'Rv: ', R
+
      FOR k = 1, nStars DO BEGIN
         LSST_dump_func, Tstars[k-1], GStars[k-1], 0, EBV[k-1], 1.0, 0, modelWl, modelFluxes[k-1]
         extincMag = ext_odonnell(modelWl,R)*EBV[k-1]*R
