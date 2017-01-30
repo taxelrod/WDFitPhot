@@ -265,7 +265,7 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,FIXEDZP=zplist,
 ;
 ; Calculate extincted flux
 ;
-     R = paramsAll(nBPHST-1)
+     R = scaleFactor*paramsAll(nBPHST-1)
      PRINTF,2,'Rv: ', R
 
      FOR k = 1, nStars DO BEGIN

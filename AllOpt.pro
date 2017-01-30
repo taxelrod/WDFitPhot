@@ -141,13 +141,13 @@ FUNCTION AllOpt, FIXEDRV=fixedRv, FIXEDZP=zplist
      paramsUB((nBpHST+3*nStars):(nBpHST+4*nStars-1)) = scaleFactor3Inv*GMaxStars  
 
      IF KEYWORD_SET(FixedRv) THEN BEGIN
-        params(nBPHST-1) = FixedRv
-        paramsLB(nBPHST-1) = FixedRv
-        paramsUB(nBPHST-1) = FixedRv
+        params(nBPHST-1) = scaleFactorInv*FixedRv
+        paramsLB(nBPHST-1) = scaleFactorInv*FixedRv
+        paramsUB(nBPHST-1) = scaleFactorInv*FixedRv
      ENDIF ELSE BEGIN
-        params(nBPHST-1)= 3.1
-        paramsLB(nBPHST-1) = 2.1
-        paramsUB(nBPHST-1) = 4.0
+        params(nBPHST-1)= scaleFactorInv*3.1
+        paramsLB(nBPHST-1) = scaleFactorInv*2.1
+        paramsUB(nBPHST-1) = scaleFactorInv*4.0
      ENDELSE
      paramsLB(nBpHST:(nBpHST+nStars-1)) = 0.0               ; extinction always >0
 
@@ -169,7 +169,7 @@ FUNCTION AllOpt, FIXEDRV=fixedRv, FIXEDZP=zplist
      zpStar = scaleFactor*params((nBpHST+nStars):(nBpHST+2*nStars-1))
      
      EBV = scalefactor*params[nBPHST:(nBpHST+nStars-1)]
-     R = params[nBpHST-1]
+     R = scaleFactor*params[nBpHST-1]
 
      Tstars = scalefactor2*params((nBpHST+2*nStars):(nBpHST+3*nStars-1))
      Gstars = scalefactor3*params((nBpHST+3*nStars):(nBpHST+4*nStars-1))
