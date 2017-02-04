@@ -18,7 +18,7 @@ FUNCTION ExtinctFuncAll, paramVec
   zpBand = DBLARR(nBpHST)
   zpBand(0:(nBpHST-2)) = scaleFactor*paramVec(0:(nBpHST-2))
   zpBand(nBpHST-1) = -TOTAL(zpBand(0:(nBpHST-2))) ; zpBand sums to zero
-  R = paramVec(nBpHST-1)
+  R = scalefactor*paramVec(nBpHST-1)
   EBV = scaleFactor*paramVec(nBpHST:(nBpHST+nStars-1))
   zpStar = scaleFactor*paramVec((nBpHST+nStars):(nBpHST+2*nStars-1))
   Tstars = scaleFactor2*paramVec((nBpHST+2*nStars):(nBpHST+3*nStars-1))
