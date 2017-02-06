@@ -14,6 +14,7 @@ FUNCTION ExtinctFuncAll, paramVec
 
   COMMON ScaleInfo, scaleFactor2, scaleFactor2Inv, scaleFactor3, scaleFactor3Inv
 
+  iBp275w = bandDict['F275W']
 
   zpBand = DBLARR(nBpHST)
   zpBand(0:(nBpHST-2)) = scaleFactor*paramVec(0:(nBpHST-2))
@@ -23,6 +24,7 @@ FUNCTION ExtinctFuncAll, paramVec
   zpStar = scaleFactor*paramVec((nBpHST+nStars):(nBpHST+2*nStars-1))
   Tstars = scaleFactor2*paramVec((nBpHST+2*nStars):(nBpHST+3*nStars-1))
   Gstars = scaleFactor3*paramVec((nBpHST+3*nStars):(nBpHST+4*nStars-1))
+  bp275wShift = FIX(paramVec(nBpHST+4*nStars))
 
   fitResult = DBLARR(nBpHST*nStars)
   synMag = DBLARR(nBpHST*nStars)
@@ -37,7 +39,11 @@ FUNCTION ExtinctFuncAll, paramVec
      FOR i = 1, nBpHST DO BEGIN
         idx = (n-1)*nBpHST+i-1
         bp = bpData[i + nBp - 1]
-        synMag(idx) = synphot2(modelWl, modelFluxes[n-1]*extinc, bp.wavelength, bp.throughput, 0)
+        IF i-1 eq ibp275w THEN BEGIN
+           synMag(idx) = synphot2(modelWl, modelFluxes[n-1]*extinc, bp.wavelength, SHIFT(bp.throughput, bp275wShift), 0)
+        ENDIF ELSE BEGIN
+           synMag(idx) = synphot2(modelWl, modelFluxes[n-1]*extinc, bp.wavelength, bp.throughput, 0)
+        ENDELSE
         fitResult(idx) = zpBand[i-1] + zpStar[n-1] + synMag(idx)
 
      ENDFOR
@@ -49,7 +55,7 @@ FUNCTION ExtinctFuncAll, paramVec
      fluxRS = modelFluxes[idRS-1]
 
      bp275w = bpData[nBp+bandDict['F275W']] 
-     synMagRSf275w = synphot2(modelWl, fluxRS, bp275w.wavelength, bp275w.throughput, 0)
+     synMagRSf275w = synphot2(modelWl, fluxRS, bp275w.wavelength, SHIFT(bp275w.throughput, bp275wShift), 0)
      obsMagRSf275w = obsMagRS[bandDict['F275W']]
 
      bp336w = bpData[nBp+bandDict['F336W']]
@@ -107,7 +113,7 @@ FUNCTION AllOpt, FIXEDRV=fixedRv, FIXEDZP=zplist
   COMMON ScaleInfo, scaleFactor2, scaleFactor2Inv, scaleFactor3, scaleFactor3Inv
 
   
-  nParams = nStars+nBpHST+nStars+nStars+nStars
+  nParams = nStars+nBpHST+nStars+nStars+nStars+1
   params = DBLARR(nParams)      ; Av for each star, zp offset for each band (sum to zero), R, zp for each star, temp for each star, logg for each star
   paramsUB = REPLICATE(1.0e30, nParams)
   paramsLB = REPLICATE(-1.0e30, nParams)
@@ -129,7 +135,7 @@ FUNCTION AllOpt, FIXEDRV=fixedRv, FIXEDZP=zplist
      params((nBpHST+nStars):(nBpHST+2*nStars-1)) = scaleFactorInv*zpStar
      params((nBpHST+2*nStars):(nBpHST+3*nStars-1)) = scaleFactor2Inv*Tstars  ; temp for each star
      params((nBpHST+3*nStars):(nBpHST+4*nStars-1)) = scaleFactor3Inv*Gstars  ; logg for each star
-
+     params(nBpHST+4*nStars) = 0  ; shift for F275W
   IF KEYWORD_SET(zplist) THEN BEGIN
      paramsLB(0:(nBpHST-2)) = scaleFactorInv*zp(0:(nBpHST-2))
      paramsUB(0:(nBpHST-2)) = scaleFactorInv*zp(0:(nBpHST-2))

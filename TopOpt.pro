@@ -213,8 +213,10 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,FIXEDZP=zplist,
 
 ;
 ; OPTIMIZER CALL    
-; 
+;
+; ------------------------------------------------------------ 
      paramsAll = AllOpt(FIXEDRV=fixedRv,FIXEDZP=zplist)
+; ------------------------------------------------------------ 
 ;
 ;
 
@@ -226,13 +228,17 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,FIXEDZP=zplist,
 
      PRINTF, 2, bandListStr
      PRINTF, 2, FORMAT='("zpBand: ",10e12.4)', zpBand
-
+;
+; DUMP F275w shift
+;
+     bp275wShift = paramsAll(nBpHST+4*nStars)
+     PRINTF, 2, FORMAT='("bp275wShift: ",f0.4)', bp275wShift
 ;
 ; Dump RS mags
 ;
   IF idRS NE !NULL THEN BEGIN
      bp275w = bpData[nBp+bandDict['F275W']] 
-     synMagRSf275w = synphot2(modelWl, fluxRS, bp275w.wavelength, bp275w.throughput, 0) + zpBand[bandDict['F275W']]
+     synMagRSf275w = synphot2(modelWl, fluxRS, bp275w.wavelength, SHIFT(bp275w.throughput, bp275wShift), 0) + zpBand[bandDict['F275W']]
      obsMagRSf275w = obsMagRS[bandDict['F275W']]
 
      bp336w = bpData[nBp+bandDict['F336W']] 
