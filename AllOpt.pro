@@ -24,7 +24,7 @@ FUNCTION ExtinctFuncAll, paramVec
   zpStar = scaleFactor*paramVec((nBpHST+nStars):(nBpHST+2*nStars-1))
   Tstars = scaleFactor2*paramVec((nBpHST+2*nStars):(nBpHST+3*nStars-1))
   Gstars = scaleFactor3*paramVec((nBpHST+3*nStars):(nBpHST+4*nStars-1))
-  bp275wShift = FIX(paramVec(nBpHST+4*nStars))
+  bp275wShift = FIX(scalefactor*paramVec(nBpHST+4*nStars))
 
   fitResult = DBLARR(nBpHST*nStars)
   synMag = DBLARR(nBpHST*nStars)
