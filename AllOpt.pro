@@ -47,7 +47,7 @@ FUNCTION ExtinctFuncAll, paramVec
            synMag1 = synphot2(modelWl, modelFluxes[n-1]*extinc, bp.wavelength, SHIFT(bp.throughput, ishift), 0)
            synMag2 = synphot2(modelWl, modelFluxes[n-1]*extinc, bp.wavelength, SHIFT(bp.throughput, ishift+1), 0)
            synMag(idx) = synMag1 + (synMag2 - synMag1)*frcShift
-	   printf, 2, 'F275 slope:', synMag2 - synMag1
+;	   printf, 2, 'F275 slope:', synMag2 - synMag1
         ENDIF ELSE BEGIN
            synMag(idx) = synphot2(modelWl, modelFluxes[n-1]*extinc, bp.wavelength, bp.throughput, 0)
         ENDELSE

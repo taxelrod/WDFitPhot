@@ -216,7 +216,7 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,FIXEDZP=zplist,
 ; OPTIMIZER CALL    
 ;
 ; ------------------------------------------------------------ 
-     paramsAll = AllOpt(FIXEDRV=fixedRv,FIXEDZP=zplist)
+     paramsAll = AllOpt(FIXEDRV=fixedRv,FIXEDZP=zplist,FIXED275=shift275)
 ; ------------------------------------------------------------ 
 ;
 ;
