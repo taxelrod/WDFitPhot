@@ -24,7 +24,7 @@ FUNCTION ExtinctFuncAll, paramVec
   zpStar = scaleFactor*paramVec((nBpHST+nStars):(nBpHST+2*nStars-1))
   Tstars = scaleFactor2*paramVec((nBpHST+2*nStars):(nBpHST+3*nStars-1))
   Gstars = scaleFactor3*paramVec((nBpHST+3*nStars):(nBpHST+4*nStars-1))
-  bp275wShift = FIX(scalefactor275*paramVec(nBpHST+4*nStars))
+  bp275wShift = scalefactor275*paramVec(nBpHST+4*nStars)
 
   PRINTF, 2, FORMAT='("bp275wShift: ",e15.4)', bp275wShift
 
@@ -42,7 +42,11 @@ FUNCTION ExtinctFuncAll, paramVec
         idx = (n-1)*nBpHST+i-1
         bp = bpData[i + nBp - 1]
         IF i-1 eq ibp275w THEN BEGIN
-           synMag(idx) = synphot2(modelWl, modelFluxes[n-1]*extinc, bp.wavelength, SHIFT(bp.throughput, bp275wShift), 0)
+           ishift = FIX(bp275wShift)
+           frcshift = bp275wShift - ishift
+           synMag1 = synphot2(modelWl, modelFluxes[n-1]*extinc, bp.wavelength, SHIFT(bp.throughput, ishift), 0)
+           synMag2 = synphot2(modelWl, modelFluxes[n-1]*extinc, bp.wavelength, SHIFT(bp.throughput, ishift+1), 0)
+           synMag(idx) = synMag1 + (synMag2 - synMag1)*frcShift
         ENDIF ELSE BEGIN
            synMag(idx) = synphot2(modelWl, modelFluxes[n-1]*extinc, bp.wavelength, bp.throughput, 0)
         ENDELSE

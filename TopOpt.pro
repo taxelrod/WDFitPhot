@@ -238,8 +238,13 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,FIXEDZP=zplist,
 ; Dump RS mags
 ;
   IF idRS NE !NULL THEN BEGIN
-     bp275w = bpData[nBp+bandDict['F275W']] 
-     synMagRSf275w = synphot2(modelWl, fluxRS, bp275w.wavelength, SHIFT(bp275w.throughput, bp275wShift), 0) + zpBand[bandDict['F275W']]
+     bp275w = bpData[nBp+bandDict['F275W']]
+     ishift = FIX(bp275wShift)
+     frcshift = bp275wShift - ishift
+     synMag1 = synphot2(modelWl, fluxRS, bp275w.wavelength, SHIFT(bp275w.throughput, ishift), 0)
+     synMag2 = synphot2(modelWl, fluxRS, bp275w.wavelength, SHIFT(bp275w.throughput, ishift+1), 0)
+     synMag = synMag1 + (synMag2 - synMag1)*frcShift
+     synMagRSf275w = synMag + zpBand[bandDict['F275W']]
      obsMagRSf275w = obsMagRS[bandDict['F275W']]
 
      bp336w = bpData[nBp+bandDict['F336W']] 
