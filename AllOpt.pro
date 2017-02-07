@@ -12,7 +12,7 @@ FUNCTION ExtinctFuncAll, paramVec
 
   COMMON ZpMinimizeInfo, fitResult, chisqRes, scaleFactor, idRS, fluxRS, obsMagRS
 
-  COMMON ScaleInfo, scaleFactor2, scaleFactor2Inv, scaleFactor3, scaleFactor3Inv
+  COMMON ScaleInfo, scaleFactor2, scaleFactor2Inv, scaleFactor3, scaleFactor3Inv, scaleFactor275, scaleFactor275Inv
 
   iBp275w = bandDict['F275W']
 
@@ -24,7 +24,7 @@ FUNCTION ExtinctFuncAll, paramVec
   zpStar = scaleFactor*paramVec((nBpHST+nStars):(nBpHST+2*nStars-1))
   Tstars = scaleFactor2*paramVec((nBpHST+2*nStars):(nBpHST+3*nStars-1))
   Gstars = scaleFactor3*paramVec((nBpHST+3*nStars):(nBpHST+4*nStars-1))
-  bp275wShift = FIX(scalefactor2*paramVec(nBpHST+4*nStars))
+  bp275wShift = FIX(scalefactor275*paramVec(nBpHST+4*nStars))
 
   PRINTF, 2, FORMAT='("bp275wShift: ",f7.4)', bp275wShift
 
@@ -128,6 +128,9 @@ FUNCTION AllOpt, FIXEDRV=fixedRv, FIXEDZP=zplist
 
   scaleFactor3 = 1.0e2
   scaleFactor3Inv = 1./scaleFactor3
+
+  scaleFactor275 = 1.e9
+  scaleFactor275Inv = 1./scaleFactor275
 ;
 ; Fit for zeropoint, ebv and (maybe) R
 ;

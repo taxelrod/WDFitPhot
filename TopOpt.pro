@@ -9,7 +9,7 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,FIXEDZP=zplist,
 
   COMMON TopInfo,  nStars, nBp, nBpHST, bpData, bandList, bandDict, zp, Tstars, TMinStars, TMaxStars, Gstars, GMinStars, GMaxStars, zpStar, EBV, modelWl, modelFluxes, sampleHST
   COMMON ZpMinimizeInfo, fitResult, chisqRes, scaleFactor, idRS, fluxRS, obsMagRS
-  COMMON ScaleInfo, scaleFactor2, scaleFactor2Inv, scaleFactor3, scaleFactor3Inv
+  COMMON ScaleInfo, scaleFactor2, scaleFactor2Inv, scaleFactor3, scaleFactor3Inv, scaleFactor275, scaleFactor275Inv
 
   IF KEYWORD_SET(zplist) THEN BEGIN
      RSStar = ''
@@ -232,7 +232,7 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,FIXEDZP=zplist,
 ;
 ; DUMP F275w shift
 ;
-     bp275wShift = scalefactor2*paramsAll(nBpHST+4*nStars)
+     bp275wShift = scalefactor275*paramsAll(nBpHST+4*nStars)
      PRINTF, 2, FORMAT='("bp275wShift: ",f7.4)', bp275wShift
 ;
 ; Dump RS mags
