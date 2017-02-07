@@ -26,6 +26,8 @@ FUNCTION ExtinctFuncAll, paramVec
   Gstars = scaleFactor3*paramVec((nBpHST+3*nStars):(nBpHST+4*nStars-1))
   bp275wShift = FIX(scalefactor2*paramVec(nBpHST+4*nStars))
 
+  PRINTF, 2, FORMAT='("bp275wShift: ",f7.4)', bp275wShift
+
   fitResult = DBLARR(nBpHST*nStars)
   synMag = DBLARR(nBpHST*nStars)
   modelFluxes = LIST()
