@@ -47,6 +47,7 @@ FUNCTION ExtinctFuncAll, paramVec
            synMag1 = synphot2(modelWl, modelFluxes[n-1]*extinc, bp.wavelength, SHIFT(bp.throughput, ishift), 0)
            synMag2 = synphot2(modelWl, modelFluxes[n-1]*extinc, bp.wavelength, SHIFT(bp.throughput, ishift+1), 0)
            synMag(idx) = synMag1 + (synMag2 - synMag1)*frcShift
+	   printf, 2, 'F275 slope:', synMag2 - synMag1
         ENDIF ELSE BEGIN
            synMag(idx) = synphot2(modelWl, modelFluxes[n-1]*extinc, bp.wavelength, bp.throughput, 0)
         ENDELSE
@@ -133,7 +134,7 @@ FUNCTION AllOpt, FIXEDRV=fixedRv, FIXEDZP=zplist
   scaleFactor3 = 1.0e2
   scaleFactor3Inv = 1./scaleFactor3
 
-  scaleFactor275 = 1.e8
+  scaleFactor275 = 1.e7
   scaleFactor275Inv = 1./scaleFactor275
 ;
 ; Fit for zeropoint, ebv and (maybe) R
@@ -155,8 +156,8 @@ FUNCTION AllOpt, FIXEDRV=fixedRv, FIXEDZP=zplist
      paramsLB((nBpHST+3*nStars):(nBpHST+4*nStars-1)) = scaleFactor3Inv*GMinStars 
      paramsUB((nBpHST+3*nStars):(nBpHST+4*nStars-1)) = scaleFactor3Inv*GMaxStars  
 
-     paramsUB(nBpHST+4*nStars) = scaleFactor275Inv*100   ; max 100A shift in F275
-     paramsLB(nBpHST+4*nStars) = -scaleFactor275Inv*100   ; max 100A shift in F275
+     paramsUB(nBpHST+4*nStars) = scaleFactor275Inv*10   ; max ~100A shift in F275
+     paramsLB(nBpHST+4*nStars) = -scaleFactor275Inv*10   ; max ~100A shift in F275
 
      IF KEYWORD_SET(FixedRv) THEN BEGIN
         params(nBPHST-1) = scaleFactorInv*FixedRv
