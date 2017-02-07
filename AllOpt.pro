@@ -26,7 +26,7 @@ FUNCTION ExtinctFuncAll, paramVec
   Gstars = scaleFactor3*paramVec((nBpHST+3*nStars):(nBpHST+4*nStars-1))
   bp275wShift = FIX(scalefactor275*paramVec(nBpHST+4*nStars))
 
-  PRINTF, 2, FORMAT='("bp275wShift: ",f7.4)', bp275wShift
+  PRINTF, 2, FORMAT='("bp275wShift: ",e15.4)', bp275wShift
 
   fitResult = DBLARR(nBpHST*nStars)
   synMag = DBLARR(nBpHST*nStars)
@@ -129,7 +129,7 @@ FUNCTION AllOpt, FIXEDRV=fixedRv, FIXEDZP=zplist
   scaleFactor3 = 1.0e2
   scaleFactor3Inv = 1./scaleFactor3
 
-  scaleFactor275 = 1.e9
+  scaleFactor275 = 1.e8
   scaleFactor275Inv = 1./scaleFactor275
 ;
 ; Fit for zeropoint, ebv and (maybe) R
@@ -150,6 +150,9 @@ FUNCTION AllOpt, FIXEDRV=fixedRv, FIXEDZP=zplist
 
      paramsLB((nBpHST+3*nStars):(nBpHST+4*nStars-1)) = scaleFactor3Inv*GMinStars 
      paramsUB((nBpHST+3*nStars):(nBpHST+4*nStars-1)) = scaleFactor3Inv*GMaxStars  
+
+     paramsUB(nBpHST+4*nStars) = scaleFactor275Inv*100   ; max 100A shift in F275
+     paramsLB(nBpHST+4*nStars) = -scaleFactor275Inv*100   ; max 100A shift in F275
 
      IF KEYWORD_SET(FixedRv) THEN BEGIN
         params(nBPHST-1) = scaleFactorInv*FixedRv

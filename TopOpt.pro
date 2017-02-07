@@ -233,7 +233,7 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,FIXEDZP=zplist,
 ; DUMP F275w shift
 ;
      bp275wShift = scalefactor275*paramsAll(nBpHST+4*nStars)
-     PRINTF, 2, FORMAT='("bp275wShift: ",f7.4)', bp275wShift
+     PRINTF, 2, FORMAT='("bp275wShift: ",e15.4)', bp275wShift
 ;
 ; Dump RS mags
 ;
