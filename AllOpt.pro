@@ -159,7 +159,7 @@ FUNCTION AllOpt, FIXEDRV=fixedRv, FIXEDZP=zplist, FIXED275=shift275
      IF KEYWORD_SET(shift275) THEN BEGIN
         params(nBpHST+4*nStars) = scaleFactor275Inv*shift275
         paramsUB(nBpHST+4*nStars) = scaleFactor275Inv*shift275
-        paramsLB(nBpHST+4*nStars) = -scaleFactor275Inv*shift275
+        paramsLB(nBpHST+4*nStars) = scaleFactor275Inv*shift275
      ENDIF ELSE BEGIN
         paramsUB(nBpHST+4*nStars) = scaleFactor275Inv*10 ; max ~100A shift in F275
         paramsLB(nBpHST+4*nStars) = -scaleFactor275Inv*10 ; max ~100A shift in F275
