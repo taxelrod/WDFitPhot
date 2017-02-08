@@ -125,16 +125,16 @@ FUNCTION AllOpt, FIXEDRV=fixedRv, FIXEDZP=zplist, FIXED275=shift275
   paramsUB = REPLICATE(1.0e30, nParams)
   paramsLB = REPLICATE(-1.0e30, nParams)
 
-  scaleFactor = 1.0e3           ; to fool CONSTRAINED_MIN into doing the right stepsize
+  scaleFactor = 1.0           ; to fool CONSTRAINED_MIN into doing the right stepsize
   scaleFactorInv = 1./scaleFactor
 
-  scaleFactor2 = 1.0e6           
+  scaleFactor2 = 1.0e4           
   scaleFactor2Inv = 1./scaleFactor2
 
-  scaleFactor3 = 1.0e2
+  scaleFactor3 = 1.0e1
   scaleFactor3Inv = 1./scaleFactor3
 
-  scaleFactor275 = 1.e7
+  scaleFactor275 = 1.0
   scaleFactor275Inv = 1./scaleFactor275
 ;
 ; Fit for zeropoint, ebv and (maybe) R
@@ -159,7 +159,7 @@ FUNCTION AllOpt, FIXEDRV=fixedRv, FIXEDZP=zplist, FIXED275=shift275
      IF KEYWORD_SET(shift275) THEN BEGIN
         params(nBpHST+4*nStars) = scaleFactor275Inv*shift275
         paramsUB(nBpHST+4*nStars) = scaleFactor275Inv*shift275
-        paramsLB(nBpHST+4*nStars) = -scaleFactor275Inv*shift275
+        paramsLB(nBpHST+4*nStars) = scaleFactor275Inv*shift275
      ENDIF ELSE BEGIN
         paramsUB(nBpHST+4*nStars) = scaleFactor275Inv*10 ; max ~100A shift in F275
         paramsLB(nBpHST+4*nStars) = -scaleFactor275Inv*10 ; max ~100A shift in F275
