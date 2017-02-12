@@ -62,7 +62,7 @@ FUNCTION ExtinctFuncAll, paramVec
 
 ; Stddev of RS mags as proxy for reddening
 ;
-  IF idRS NE !NULL THEN BEGIN
+  IF idRS NE -1 THEN BEGIN
      fluxRS = modelFluxes[idRS-1]
 
      IF bandDict.HasKey('F275W') THEN BEGIN

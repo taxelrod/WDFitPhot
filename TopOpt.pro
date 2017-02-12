@@ -96,6 +96,8 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,FIXEDZP=zplist,
 ;
 ; Now read in the per star info
 ; 
+  idRS = -1
+
   FOR n = 1, nStars DO BEGIN
      read_WDDATA,starFile,starList[n-1],Tret,Gret,EBVret,HSTObs,HSTObsUnc,sigmaT,sigmaG,bandList
      IF starList[n-1] eq RSStar THEN BEGIN
@@ -204,7 +206,7 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,FIXEDZP=zplist,
 ;
 ; Use RSStar as a reddening constraint
 ;
-  IF idRS NE !NULL THEN BEGIN
+  IF idRS NE -1 THEN BEGIN
      idx = (idRS-1)*nBpHST
      obsMagRS = HSTObsAll[idx:(idx+nBpHST-1)]
      tempRS = Tstars[idRS-1]
