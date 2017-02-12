@@ -94,18 +94,16 @@ FUNCTION ExtinctFuncAll, paramVec
      synMagRSf160w = synphot2(modelWl, fluxRS, bp160w.wavelength, bp160w.throughput, 0)
      obsMagRSf160w = obsMagRS[bandDict['F160W']]
 
-     RSdelta = DBLARR(6)
+     RSdelta = DBLARR(nBpHST)
      IF bandDict.HasKey('F275W') THEN BEGIN
-        RSdelta[0] = synMagRSf275w - obsMagRSf275w + zpBand[bandDict['F275W']]
-     ENDIF ELSE BEGIN
-        RSdelta[0] = 0
-     ENDELSE
+        RSdelta[bandDict['F275W']] = synMagRSf275w - obsMagRSf275w + zpBand[bandDict['F275W']]
+     ENDIF 
 
-     RSdelta[1] = synMagRSf336w - obsMagRSf336w + zpBand[bandDict['F336W']]
-     RSdelta[2] = synMagRSf475w - obsMagRSf475w + zpBand[bandDict['F475W']]
-     RSdelta[3] = synMagRSf625w - obsMagRSf625w + zpBand[bandDict['F625W']]
-     RSdelta[4] = synMagRSf775w - obsMagRSf775w + zpBand[bandDict['F775W']]
-     RSdelta[5] = synMagRSf160w - obsMagRSf160w + zpBand[bandDict['F160W']]
+     RSdelta[bandDict['F336W']] = synMagRSf336w - obsMagRSf336w + zpBand[bandDict['F336W']]
+     RSdelta[bandDict['F475W']] = synMagRSf475w - obsMagRSf475w + zpBand[bandDict['F475W']]
+     RSdelta[bandDict['F625W']] = synMagRSf625w - obsMagRSf625w + zpBand[bandDict['F625W']]
+     RSdelta[bandDict['F775W']] = synMagRSf775w - obsMagRSf775w + zpBand[bandDict['F775W']]
+     RSdelta[bandDict['F160W']] = synMagRSf160w - obsMagRSf160w + zpBand[bandDict['F160W']]
 
      RSred = TOTAL((RSdelta - MEAN(RSdelta))^2) / 0.01^2
   ENDIF ELSE BEGIN
