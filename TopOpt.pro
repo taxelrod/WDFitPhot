@@ -238,14 +238,19 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,FIXEDZP=zplist,
 ; Dump RS mags
 ;
   IF idRS NE !NULL THEN BEGIN
-     bp275w = bpData[nBp+bandDict['F275W']]
-     ishift = FIX(bp275wShift)
-     frcshift = bp275wShift - ishift
-     synMag1 = synphot2(modelWl, fluxRS, bp275w.wavelength, SHIFT(bp275w.throughput, ishift), 0)
-     synMag2 = synphot2(modelWl, fluxRS, bp275w.wavelength, SHIFT(bp275w.throughput, ishift+1), 0)
-     synMag = synMag1 + (synMag2 - synMag1)*frcShift
-     synMagRSf275w = synMag + zpBand[bandDict['F275W']]
-     obsMagRSf275w = obsMagRS[bandDict['F275W']]
+     IF bandDict.HasKey('F275W') THEN BEGIN
+        bp275w = bpData[nBp+bandDict['F275W']]
+        ishift = FIX(bp275wShift)
+        frcshift = bp275wShift - ishift
+        synMag1 = synphot2(modelWl, fluxRS, bp275w.wavelength, SHIFT(bp275w.throughput, ishift), 0)
+        synMag2 = synphot2(modelWl, fluxRS, bp275w.wavelength, SHIFT(bp275w.throughput, ishift+1), 0)
+        synMag = synMag1 + (synMag2 - synMag1)*frcShift
+        synMagRSf275w = synMag + zpBand[bandDict['F275W']]
+        obsMagRSf275w = obsMagRS[bandDict['F275W']]
+     ENDIF ELSE BEGIN
+        synMagRSf275w = 0
+        obsMagRSf275w = 0
+     ENDELSE
 
      bp336w = bpData[nBp+bandDict['F336W']] 
      synMagRSf336w = synphot2(modelWl, fluxRS, bp336w.wavelength, bp336w.throughput, 0) + zpBand[bandDict['F336W']]

@@ -14,7 +14,11 @@ FUNCTION ExtinctFuncAll, paramVec
 
   COMMON ScaleInfo, scaleFactor2, scaleFactor2Inv, scaleFactor3, scaleFactor3Inv, scaleFactor275, scaleFactor275Inv
 
-  iBp275w = bandDict['F275W']
+  IF bandDict.HasKey('F275W') THEN BEGIN
+     iBp275w = bandDict['F275W']
+  ENDIF ELSE BEGIN
+     iBp275w = -1
+  ENDELSE
 
   zpBand = DBLARR(nBpHST)
   zpBand(0:(nBpHST-2)) = scaleFactor*paramVec(0:(nBpHST-2))
@@ -61,9 +65,11 @@ FUNCTION ExtinctFuncAll, paramVec
   IF idRS NE !NULL THEN BEGIN
      fluxRS = modelFluxes[idRS-1]
 
-     bp275w = bpData[nBp+bandDict['F275W']] 
-     synMagRSf275w = synphot2(modelWl, fluxRS, bp275w.wavelength, SHIFT(bp275w.throughput, bp275wShift), 0)
-     obsMagRSf275w = obsMagRS[bandDict['F275W']]
+     IF bandDict.HasKey('F275W') THEN BEGIN
+        bp275w = bpData[nBp+bandDict['F275W']] 
+        synMagRSf275w = synphot2(modelWl, fluxRS, bp275w.wavelength, SHIFT(bp275w.throughput, bp275wShift), 0)
+        obsMagRSf275w = obsMagRS[bandDict['F275W']]
+     ENDIF
 
      bp336w = bpData[nBp+bandDict['F336W']]
 ;  synMagRSf336w = synphot2(modelWl, fluxRS, bp336w.wavelength, bp336w.throughput, zpBand[bandDict['F336W']])
@@ -89,7 +95,12 @@ FUNCTION ExtinctFuncAll, paramVec
      obsMagRSf160w = obsMagRS[bandDict['F160W']]
 
      RSdelta = DBLARR(6)
-     RSdelta[0] = synMagRSf275w - obsMagRSf275w + zpBand[bandDict['F275W']]
+     IF bandDict.HasKey('F275W') THEN BEGIN
+        RSdelta[0] = synMagRSf275w - obsMagRSf275w + zpBand[bandDict['F275W']]
+     ENDIF ELSE BEGIN
+        RSdelta[0] = 0
+     ENDELSE
+
      RSdelta[1] = synMagRSf336w - obsMagRSf336w + zpBand[bandDict['F336W']]
      RSdelta[2] = synMagRSf475w - obsMagRSf475w + zpBand[bandDict['F475W']]
      RSdelta[3] = synMagRSf625w - obsMagRSf625w + zpBand[bandDict['F625W']]
