@@ -239,7 +239,7 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,FIXEDZP=zplist,
 ;
 ; Dump RS mags
 ;
-  IF idRS NE !NULL THEN BEGIN
+  IF idRS NE -1 THEN BEGIN
      IF bandDict.HasKey('F275W') THEN BEGIN
         bp275w = bpData[nBp+bandDict['F275W']]
         ishift = FIX(bp275wShift)
