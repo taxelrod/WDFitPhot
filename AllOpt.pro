@@ -37,7 +37,7 @@ FUNCTION ExtinctFuncAll, paramVec
   modelFluxes = LIST()
 
   FOR n = 1, nStars DO BEGIN
-     LSST_dump_func, Tstars[n-1], Gstars[n-1], 0, EBV[n-1], 1.0, 0, modelWL, flux
+     LSST_dump_func, Tstars[n-1], Gstars[n-1], 0, 1.0, 0, modelWL, flux
      modelFluxes.add, flux
      extincMag = ext_ccm(modelWL,R)*EBV[n-1]*R
      extinc = 10^(-0.4*extincMag)
