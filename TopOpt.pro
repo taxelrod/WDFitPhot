@@ -289,7 +289,7 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,FIXEDZP=zplist,
 
      FOR k = 1, nStars DO BEGIN
         LSST_dump_func, Tstars[k-1], GStars[k-1], 0, EBV[k-1], 1.0, 0, modelWl, modelFluxes[k-1]
-        extincMag = ext_odonnell(modelWl,R)*EBV[k-1]*R
+        extincMag = ext_ccm(modelWl,R)*EBV[k-1]*R
         extinc = 10^(-0.4*extincMag)
         fluxe = modelFluxes[k-1]*extinc
         idx = (k-1)*nBpHST

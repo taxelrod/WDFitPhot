@@ -1,4 +1,4 @@
-PRO LSST_dump_func,T,G,gobs,EBV,Nor,V,Wmod,Fmod
+PRO LSST_dump_func,T,G,gobs,Nor,V,Wmod,Fmod
 ;****************************************************************************
 ;* LSST_dump_func is based on LSST_dump.  Instead of writing the flux
 ;* to a file, returns it as a vector.  Code to read input data from a
@@ -56,7 +56,7 @@ MAKE_MODEL,GRIDIR,Teff,Logg,gobs,FWHM,SAMP,WINDOW,WI,FI
 wmod = [WN,WB,WI]
 fmod = [FN,FB,FI]
 
-EXTN = fitzpatrick(wmod,3.1)*EBV
+EXTN = 0
 frd  = 10.0^(0.4*EXTN)
 fred = fmod/frd               ; reddened model
 zg    = WHERE(lam EQ wmod)

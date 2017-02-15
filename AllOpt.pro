@@ -39,7 +39,7 @@ FUNCTION ExtinctFuncAll, paramVec
   FOR n = 1, nStars DO BEGIN
      LSST_dump_func, Tstars[n-1], Gstars[n-1], 0, EBV[n-1], 1.0, 0, modelWL, flux
      modelFluxes.add, flux
-     extincMag = ext_odonnell(modelWL,R)*EBV[n-1]*R
+     extincMag = ext_ccm(modelWL,R)*EBV[n-1]*R
      extinc = 10^(-0.4*extincMag)
 
      FOR i = 1, nBpHST DO BEGIN
