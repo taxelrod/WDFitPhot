@@ -1,12 +1,27 @@
 ;
 ; This is the top level sequencer for the optimization
 ;
+; Note, if zplist is given, the reddening constraint star is ignored.
+; Also, starList should have only a single star
+;
 
+PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,FIXEDZP=zplist,FIXED275=shift275,PLOTSTARS=doPlots,DUMPFLUX=fluxFileName
 
-PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,PLOTSTARS=doPlots,DUMPFLUX=fluxFileName
+  COMMON TopInfo,  nStars, nBp, nBpHST, bpData, bandList, bandDict, zp, Tstars, TMinStars, TMaxStars, Gstars, GMinStars, GMaxStars, zpStar, EBV, modelWl, modelFluxes, sampleHST
+  COMMON ZpMinimizeInfo, fitResult, chisqRes, scaleFactor, idRS, fluxRS, obsMagRS
+  COMMON ScaleInfo, scaleFactor2, scaleFactor2Inv, scaleFactor3, scaleFactor3Inv, scaleFactor275, scaleFactor275Inv
 
-  COMMON TopInfo,  nStars, nBp, nBpHST, bpData, bandList, bandDict, zp, Tstars, Gstars, ZpStars, EBV, modelWl, modelFluxes, sampleHST
-  COMMON ZpMinimizeInfo, fitResult, chisqRes, scaleFactor, fluxGD153, obsMagGD153f275w, obsMagGD153f336w, obsMagGD153f475w, obsMagGD153f625w, obsMagGD153f775w, obsMagGD153f160w, Tlast, Glast
+  IF KEYWORD_SET(zplist) THEN BEGIN
+     RSStar = ''
+     nStars = N_ELEMENTS(starList)
+     IF nStars NE 1 THEN BEGIN
+        PRINT, 'When ZP is given, starList can have only one star'
+        RETURN
+     ENDIF
+     
+  ENDIF ELSE BEGIN
+     RSStar = 'G191B2B'
+  ENDELSE
 
   CLOSE,2
   OPENW,2,outFileName
@@ -42,17 +57,19 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,PLOTSTARS=doPlo
   covarTG = DBLARR(2, 2, nStars)
   HSTObsAll = DBLARR(nBpHST*nStars)
   SampleHST = DBLARR(nBpHST*nStars)
-  T0 = DBLARR(nStars)
-  G0 = DBLARR(nStars)
   EBV0 = DBLARR(nStars)
-  T = DBLARR(nStars)
-  G = DBLARR(nStars)
-;
-; These keep track of when T or G changes to optimize performance
-;
-  Tlast = DBLARR(nStars)
-  Glast = DBLARR(nStars)
-  
+
+  TStars = DBLARR(nStars)
+  TNominal = DBLARR(nStars)
+  TMinStars = DBLARR(nStars)
+  TMaxStars = DBLARR(nStars)
+  Torig = DBLARR(nStars)
+  GStars = DBLARR(nStars)
+  GNominal = DBLARR(nStars)
+  GMinStars = DBLARR(nStars)
+  GMaxStars = DBLARR(nStars)
+  Gorig = DBLARR(nStars)
+  zpStar = DBLARR(nStars)
   zpBand = DBLARR(nBpHST)
 
   modelFluxes = LIST(LENGTH=nStars)
@@ -79,11 +96,24 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,PLOTSTARS=doPlo
   ENDFOR
 ;
 ; Now read in the per star info
-;    
+; 
+  idRS = -1
+
   FOR n = 1, nStars DO BEGIN
      read_WDDATA,starFile,starList[n-1],Tret,Gret,EBVret,HSTObs,HSTObsUnc,sigmaT,sigmaG,bandList
-     T0[n-1] = Tret
-     G0[n-1] = Gret
+     IF starList[n-1] eq RSStar THEN BEGIN
+        idRS = n
+        PRINTF, 2, 'IDRS=', idRS
+     ENDIF
+
+     TNominal[n-1] = Tret
+     TMinStars[n-1] = Tret - 2*sigmaT
+     TMaxStars[n-1] = Tret + 2*sigmaT
+     Torig[n-1] = Tret
+     GNominal[n-1] = Gret
+     GMinStars[n-1] = Gret - 2*sigmaG
+     GMaxStars[n-1] = Gret + 2*sigmaG
+     Gorig[n-1] = Gret
      EBV0[n-1] = EBVret
      idx = (n-1)*nBpHST
 ;     HSTObsAll[idx:(idx+nBpHST-1)] = HSTObs - zeropointsHST; these
@@ -132,7 +162,7 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,PLOTSTARS=doPlo
   K0 = -30.893
 
 ;
-; read in the HST bandpasses. Note files must be like 'F336W.csv'
+; read in the HST bandpasses. Note files names must be like 'F336W.csv'
 ;
   RESTORE, 'RunData/HST_filter_template.sav'
   bandPassRoot = 'RunData/'
@@ -145,54 +175,53 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,PLOTSTARS=doPlo
      zeropoints.add, zeropointsHST(n-1)
   ENDFOR
 
-  format1 = '($,A20,5(e12.4))'
+  format1 = '($,A20,7(e12.4))'
   format2 = '($,e14.6)'
-
-  
- 
   
   bandMag = DBLARR(nBP+nBpHST)
   FOR n = 1, nSample DO BEGIN
      FOR k = 1, nStars DO BEGIN
-        sample = mrandomn(undef, covarTG[*,*,k-1])
-        ;; T[k-1] = sample(0) + T0(k-1)
-        ;; G[k-1] = sample(1) + G0(k-1)
-        T[k-1] = T0(k-1)
-        G[k-1] = G0(k-1)
         idx = (k-1)*nBpHST
         sampleHST(idx:(idx+nBpHST-1)) = mrandomn(undef, covarHST[*,*,k-1]) + HSTObsAll(idx:(idx+nBpHST-1))
+        randomTG = mrandomn(undef, covarTG[*,*,k-1])
+        TStars = TNominal + randomTG(0)
+        GStars = GNominal + randomTG(1)
      ENDFOR
+     
+     Torig = Tstars
+     Gorig = Gstars
+     
 ;
 ; initial guesses for ZpStar and EBV
 ;
      ZpStars = DBLARR(nStars)
      EBV = EBV0
-     Tstars = T
-     Gstars = G
+
+     
+  IF KEYWORD_SET(zplist) THEN BEGIN
+     zp = zplist
+  ENDIF ELSE BEGIN
      zp = DBLARR(nBpHST)
-;
-; Use GD153 as a reddening constraint; T and logg from Bohlin
-;
-     tempGD153 = 38686.
-     loggGD153 = 7.66
-     GetModelFlux, tempGD153, loggGD153, modelWl,  fluxGD153
+  ENDELSE
 
-; cycle 20 (paper) system
-     ;; obsMagGD153f336w = 11.348 - zeropointsHSTDict['F336W'] ; from GN table
-     ;; obsMagGD153f475w = 13.182 - zeropointsHSTDict['F475W'] ; from GN table
-     ;; obsMagGD153f625w = 13.455 - zeropointsHSTDict['F625W'] ; from GN table
+;
+; Use RSStar as a reddening constraint
+;
 
-; cycle 22 instrumental mags
-     obsMagGD153f275w = -11.85745
-     obsMagGD153f336w = -12.02242
-     obsMagGD153f475w = -12.47516
-     obsMagGD153f625w = -11.80634
-     obsMagGD153f775w = -10.71429 
-     obsMagGD153f160w = -10.39641
+  IF idRS NE -1 THEN BEGIN
+     idx = (idRS-1)*nBpHST
+     obsMagRS = HSTObsAll[idx:(idx+nBpHST-1)]
+     tempRS = Tstars[idRS-1]
+     loggRS = Gstars[idRS-1]
+     GetModelFlux, tempRS, loggRS, modelWl,  fluxRS
+  ENDIF
+
 ;
 ; OPTIMIZER CALL    
-; 
-     paramsAll = AllOpt(FIXEDRV=fixedRv)
+;
+; ------------------------------------------------------------ 
+     paramsAll = AllOpt(FIXEDRV=fixedRv,FIXEDZP=zplist,FIXED275=shift275)
+; ------------------------------------------------------------ 
 ;
 ;
 
@@ -204,48 +233,76 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,PLOTSTARS=doPlo
 
      PRINTF, 2, bandListStr
      PRINTF, 2, FORMAT='("zpBand: ",10e12.4)', zpBand
-     formatHead = '(A0," ",A0," ",A0," ",A0)'
-     PRINTF,2,FORMAT=formatHead, '# id T Torig logg Av sigma u g r i (observed)', bandListStr,  '(fit-observed)', bandListStr
+
 ;
-; Dump GD153 mags
+; DUMP F275w shift
 ;
-     bp275w = bpData[nBp+bandDict['F275W']] 
-     synMagGD153f275w = synphot2(modelWl, fluxGD153, bp275w.wavelength, bp275w.throughput, 0) + zpBand[bandDict['F275W']]
+     bp275wShift = scalefactor275*paramsAll(nBpHST+4*nStars)
+     PRINTF, 2, FORMAT='("bp275wShift: ",e15.4)', bp275wShift
+;
+; Dump RS mags
+;
+  IF idRS NE -1 THEN BEGIN
+     IF bandDict.HasKey('F275W') THEN BEGIN
+        bp275w = bpData[nBp+bandDict['F275W']]
+        ishift = FIX(bp275wShift)
+        frcshift = bp275wShift - ishift
+        synMag1 = synphot2(modelWl, fluxRS, bp275w.wavelength, SHIFT(bp275w.throughput, ishift), 0)
+        synMag2 = synphot2(modelWl, fluxRS, bp275w.wavelength, SHIFT(bp275w.throughput, ishift+1), 0)
+        synMag = synMag1 + (synMag2 - synMag1)*frcShift
+        synMagRSf275w = synMag + zpBand[bandDict['F275W']]
+        obsMagRSf275w = obsMagRS[bandDict['F275W']]
+     ENDIF ELSE BEGIN
+        synMagRSf275w = 0
+        obsMagRSf275w = 0
+     ENDELSE
 
      bp336w = bpData[nBp+bandDict['F336W']] 
-     synMagGD153f336w = synphot2(modelWl, fluxGD153, bp336w.wavelength, bp336w.throughput, 0) + zpBand[bandDict['F336W']]
+     synMagRSf336w = synphot2(modelWl, fluxRS, bp336w.wavelength, bp336w.throughput, 0) + zpBand[bandDict['F336W']]
+     obsMagRSf336w = obsMagRS[bandDict['F336W']]
 
      bp475w = bpData[nBp+bandDict['F475W']]
-     synMagGD153f475w = synphot2(modelWl, fluxGD153, bp475w.wavelength, bp475w.throughput, 0) + zpBand[bandDict['F475W']]
+     synMagRSf475w = synphot2(modelWl, fluxRS, bp475w.wavelength, bp475w.throughput, 0) + zpBand[bandDict['F475W']]
+     obsMagRSf475w = obsMagRS[bandDict['F475W']]
 
      bp625w = bpData[nBp+bandDict['F625W']]
-     synMagGD153f625w = synphot2(modelWl, fluxGD153, bp625w.wavelength, bp625w.throughput, 0) + zpBand[bandDict['F625W']]
+     synMagRSf625w = synphot2(modelWl, fluxRS, bp625w.wavelength, bp625w.throughput, 0) + zpBand[bandDict['F625W']]
+     obsMagRSf625w = obsMagRS[bandDict['F625W']]
 
      bp775w = bpData[nBp+bandDict['F775W']] 
-     synMagGD153f775w = synphot2(modelWl, fluxGD153, bp775w.wavelength, bp775w.throughput, 0) + zpBand[bandDict['F775W']]
+     synMagRSf775w = synphot2(modelWl, fluxRS, bp775w.wavelength, bp775w.throughput, 0) + zpBand[bandDict['F775W']]
+     obsMagRSf775w = obsMagRS[bandDict['F775W']]
 
-     ;; bp160w = bpData[nBp+bandDict['F160W']] 
-     ;; synMagGD153f160w = synphot2(modelWl, fluxGD153, bp160w.wavelength, bp160w.throughput, 0) + zpBand[bandDict['F160W']]
-     obsMagGD153f160w = -99
-     synMagGD153f160w = -99
+     IF bandDict.HasKey('F160W') THEN BEGIN
+        bp160w = bpData[nBp+bandDict['F160W']] 
+        synMagRSf160w = synphot2(modelWl, fluxRS, bp160w.wavelength, bp160w.throughput, 0) + zpBand[bandDict['F160W']]
+        obsMagRSf160w = obsMagRS[bandDict['F160W']]
+     ENDIF ELSE BEGIN
+        synMagRSf160w = 0
+        obsMagRSf160w = 0
+     ENDELSE
 
-     PRINTF, 2 , 'GD153 syn:', synMagGD153f275w, synMagGD153f336w, synMagGD153f475w, synMagGD153f625w, synMagGD153f775w, synMagGD153f160w
-     PRINTF, 2, 'GD153 obs:', obsMagGD153f275w, obsMagGD153f336w, obsMagGD153f475w, obsMagGD153f625w, obsMagGD153f775w, obsMagGD153f160w
-     PRINTF, 2, 'GD153 syn-obs:', synMagGD153f275w - obsMagGD153f275w, synMagGD153f336w - obsMagGD153f336w, synMagGD153f475w - obsMagGD153f475w, synMagGD153f625w - obsMagGD153f625w, synMagGD153f775w - obsMagGD153f775w, synMagGD153f160w - obsMagGD153f160w
+     PRINTF, 2 , 'RS syn:', synMagRSf275w, synMagRSf336w, synMagRSf475w, synMagRSf625w, synMagRSf775w, synMagRSf160w
+     PRINTF, 2, 'RS obs:', obsMagRSf275w, obsMagRSf336w, obsMagRSf475w, obsMagRSf625w, obsMagRSf775w, obsMagRSf160w
+     PRINTF, 2, 'RS syn-obs:', synMagRSf275w - obsMagRSf275w, synMagRSf336w - obsMagRSf336w, synMagRSf475w - obsMagRSf475w, synMagRSf625w - obsMagRSf625w, synMagRSf775w - obsMagRSf775w, synMagRSf160w - obsMagRSf160w
+  ENDIF
 
-
+     formatHead = '(A0," ",A0," ",A0," ",A0)'
+     PRINTF,2,FORMAT=formatHead, '# id T Torig logg loggorig Av sigma u g r i z (observed)', bandListStr,  '(fit-observed)', bandListStr
 ;
 ; Calculate extincted flux
 ;
-     R = paramsAll(nBPHST-1)
+     R = scaleFactor*paramsAll(nBPHST-1)
+     PRINTF,2,'Rv: ', R
+
      FOR k = 1, nStars DO BEGIN
-        GetModelFlux, Tstars[k-1], G0[k-1], modelWl, modelFluxes[k-1]
-        extincMag = ext_odonnell(modelWl,R)*EBV[k-1]*R
+        GetModelFlux, Tstars[k-1], GStars[k-1], modelWl, modelFluxes[k-1]
+        extincMag = ext_ccm(modelWl,R)*EBV[k-1]*R
         extinc = 10^(-0.4*extincMag)
         fluxe = modelFluxes[k-1]*extinc
         idx = (k-1)*nBpHST
         sigma = STDDEV(fitResult(idx:(idx+nBpHST-1)) - sampleHST(idx:(idx+nBpHST-1)))
-        PRINTF, 2, FORMAT=format1, starList[k-1], Tstars[k-1], T[k-1], G[k-1], R*EBV[k-1], sigma
+        PRINTF, 2, FORMAT=format1, starList[k-1], Tstars[k-1], Torig[k-1], Gstars[k-1], Gorig[k-1], R*EBV[k-1], sigma
         IF KEYWORD_SET(fluxFileName) THEN BEGIN
            fac = 10^(-0.4*(ZpStars[k-1] - K0))
            PRINTF, 3, '# ', starList[k-1]
