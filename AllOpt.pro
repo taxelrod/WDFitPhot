@@ -36,9 +36,8 @@ FUNCTION ExtinctFuncAll, paramVec
   synMag = DBLARR(nBpHST*nStars)
 
   FOR n = 1, nStars DO BEGIN
-        GetModelFlux, Tstars[n-1], Gstars[n-1], modelWL, flux
-        modelFluxes[n-1] = flux
-     ENDIF
+     GetModelFlux, Tstars[n-1], Gstars[n-1], modelWL, flux
+     modelFluxes[n-1] = flux
 
      extincMag = ext_odonnell(modelWL,R)*EBV[n-1]*R
      extinc = 10^(-0.4*extincMag)
