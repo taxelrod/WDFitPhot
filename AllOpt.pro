@@ -36,11 +36,8 @@ FUNCTION ExtinctFuncAll, paramVec
   synMag = DBLARR(nBpHST*nStars)
 
   FOR n = 1, nStars DO BEGIN
-     IF (Tstars[n-1] ne Tlast[n-1]) or (Gstars[n-1] ne Glast[n-1]) THEN BEGIN
         GetModelFlux, Tstars[n-1], Gstars[n-1], modelWL, flux
         modelFluxes[n-1] = flux
-        Tlast[n-1] = Tstars[n-1]
-        Glast[n-1] = Gstars[n-1]
      ENDIF
 
      extincMag = ext_odonnell(modelWL,R)*EBV[n-1]*R
