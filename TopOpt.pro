@@ -270,9 +270,14 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,FIXEDZP=zplist,
      synMagRSf775w = synphot2(modelWl, fluxRS, bp775w.wavelength, bp775w.throughput, 0) + zpBand[bandDict['F775W']]
      obsMagRSf775w = obsMagRS[bandDict['F775W']]
 
-     bp160w = bpData[nBp+bandDict['F160W']] 
-     synMagRSf160w = synphot2(modelWl, fluxRS, bp160w.wavelength, bp160w.throughput, 0) + zpBand[bandDict['F160W']]
-     obsMagRSf160w = obsMagRS[bandDict['F160W']]
+     IF bandDict.HasKey('F160W') THEN BEGIN
+        bp160w = bpData[nBp+bandDict['F160W']] 
+        synMagRSf160w = synphot2(modelWl, fluxRS, bp160w.wavelength, bp160w.throughput, 0) + zpBand[bandDict['F160W']]
+        obsMagRSf160w = obsMagRS[bandDict['F160W']]
+     ENDIF ELSE BEGIN
+        synMagRSf160w = 0
+        obsMagRSf160w = 0
+     ENDELSE
 
      PRINTF, 2 , 'RS syn:', synMagRSf275w, synMagRSf336w, synMagRSf475w, synMagRSf625w, synMagRSf775w, synMagRSf160w
      PRINTF, 2, 'RS obs:', obsMagRSf275w, obsMagRSf336w, obsMagRSf475w, obsMagRSf625w, obsMagRSf775w, obsMagRSf160w
