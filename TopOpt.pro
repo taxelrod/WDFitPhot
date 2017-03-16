@@ -7,7 +7,7 @@
 
 PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,FIXEDZP=zplist,FIXED275=shift275,PLOTSTARS=doPlots,DUMPFLUX=fluxFileName
 
-  COMMON TopInfo,  nStars, nBp, nBpHST, bpData, bandList, bandDict, zp, Tstars, TMinStars, TMaxStars, Gstars, GMinStars, GMaxStars, zpStar, EBV, modelWl, modelFluxes, sampleHST
+  COMMON TopInfo,  nStars, nBp, nBpHST, bpData, bandList, bandDict, zp, Tstars, TMinStars, TMaxStars, Gstars, GMinStars, GMaxStars, zpStar, EBV, modelWl, modelFluxes, sampleHST, HSTObsUncAll
   COMMON ZpMinimizeInfo, fitResult, chisqRes, scaleFactor, idRS, fluxRS, obsMagRS
   COMMON ScaleInfo, scaleFactor2, scaleFactor2Inv, scaleFactor3, scaleFactor3Inv, scaleFactor275, scaleFactor275Inv
 
@@ -57,6 +57,7 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,FIXEDZP=zplist,
   covarHST = DBLARR(nBpHST, nBpHST, nStars)
   covarTG = DBLARR(2, 2, nStars)
   HSTObsAll = DBLARR(nBpHST*nStars)
+  HSTObsUncAll = DBLARR(nBpHST*nStars)
   SampleHST = DBLARR(nBpHST*nStars)
   EBV0 = DBLARR(nStars)
   TStars = DBLARR(nStars)
@@ -120,12 +121,15 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,FIXEDZP=zplist,
 ;                                              mags- OLD convention for
 ;                                              input mags
      HSTObsAll[idx:(idx+nBpHST-1)] = HSTObs; these are instrumental mags as input
+     HSTObsUncAll[idx:(idx+nBpHST-1)] = HSTObsUnc; these are instrumental mags as input
 ;
 ; Set up covariance matrices, diagonal for now
 ;
      covarTG[*, *, n-1] = DIAG_MATRIX([sigmaT^2, sigmaG^2])
      covarHST[*, *, n-1] = DIAG_MATRIX(HSTObsUnc^2)
   ENDFOR
+
+  HSTObsUncAll /= max(HSTObsUncAll)
 ;
 ; set up AB standard flux
 ;

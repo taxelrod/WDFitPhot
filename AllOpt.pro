@@ -8,7 +8,7 @@ FUNCTION ExtinctFuncAll, paramVec
 ; paramVec - (zp_i, R, Ebv)
 ; vals - synth_mag_{ni} + (zp_i + X_i(R, Ebv_n))
 ; 
-  COMMON TopInfo,  nStars, nBp, nBpHST, bpData, bandList, bandDict, zp, Tstars, TMinStars, TMaxStars, Gstars, GMinStars, GMaxStars, zpStar, EBV, modelWl, modelFluxes, sampleHST
+  COMMON TopInfo,  nStars, nBp, nBpHST, bpData, bandList, bandDict, zp, Tstars, TMinStars, TMaxStars, Gstars, GMinStars, GMaxStars, zpStar, EBV, modelWl, modelFluxes, sampleHST, HSTObsUncAll
 
   COMMON ZpMinimizeInfo, fitResult, chisqRes, scaleFactor, idRS, fluxRS, obsMagRS
 
@@ -65,6 +65,7 @@ FUNCTION ExtinctFuncAll, paramVec
 ;
   IF idRS NE -1 THEN BEGIN
      fluxRS = modelFluxes[idRS-1]
+     idxRS = (idRS-1)*nBpHST
 
      IF bandDict.HasKey('F275W') THEN BEGIN
         bp275w = bpData[nBp+bandDict['F275W']] 
@@ -99,23 +100,23 @@ FUNCTION ExtinctFuncAll, paramVec
 
      RSdelta = DBLARR(nBpHST)
      IF bandDict.HasKey('F275W') THEN BEGIN
-        RSdelta[bandDict['F275W']] = synMagRSf275w - obsMagRSf275w + zpBand[bandDict['F275W']]
+        RSdelta[bandDict['F275W']] = (synMagRSf275w - obsMagRSf275w + zpBand[bandDict['F275W']] + zpStar[idRS-1])/HSTObsUncAll(idxRS+bandDict['F275W']-1)
      ENDIF 
 
-     RSdelta[bandDict['F336W']] = synMagRSf336w - obsMagRSf336w + zpBand[bandDict['F336W']]
-     RSdelta[bandDict['F475W']] = synMagRSf475w - obsMagRSf475w + zpBand[bandDict['F475W']]
-     RSdelta[bandDict['F625W']] = synMagRSf625w - obsMagRSf625w + zpBand[bandDict['F625W']]
-     RSdelta[bandDict['F775W']] = synMagRSf775w - obsMagRSf775w + zpBand[bandDict['F775W']]
+     RSdelta[bandDict['F336W']] = (synMagRSf336w - obsMagRSf336w + zpBand[bandDict['F336W']] + zpStar[idRS-1])/HSTObsUncAll(idxRS+bandDict['F336W']-1)
+     RSdelta[bandDict['F475W']] = (synMagRSf475w - obsMagRSf475w + zpBand[bandDict['F475W']] + zpStar[idRS-1])/HSTObsUncAll(idxRS+bandDict['F475W']-1)
+     RSdelta[bandDict['F625W']] = (synMagRSf625w - obsMagRSf625w + zpBand[bandDict['F625W']] + zpStar[idRS-1])/HSTObsUncAll(idxRS+bandDict['F625W']-1)
+     RSdelta[bandDict['F775W']] = (synMagRSf775w - obsMagRSf775w + zpBand[bandDict['F775W']] + zpStar[idRS-1])/HSTObsUncAll(idxRS+bandDict['F775W']-1)
      IF bandDict.HasKey('F160W') THEN BEGIN
-        RSdelta[bandDict['F160W']] = synMagRSf160w - obsMagRSf160w + zpBand[bandDict['F160W']]
+        RSdelta[bandDict['F160W']] = (synMagRSf160w - obsMagRSf160w + zpBand[bandDict['F160W']] + zpStar[idRS-1])/HSTObsUncAll(idxRS+bandDict['F775W']-1)
      ENDIF 
 
-     RSred = TOTAL((RSdelta - MEAN(RSdelta))^2) / 0.01^2
+     RSred = TOTAL((RSdelta)^2) / 0.01^2
   ENDIF ELSE BEGIN
      RSred = 0
   ENDELSE
-
-  chisqRes = TOTAL((sampleHST - fitResult)^2) + RSred
+  RSred = 0
+  chisqRes = TOTAL(((sampleHST - fitResult)/HSTObsUncAll)^2) + RSred
   PRINT, paramVec
   PRINT, 'chisq:', chisqRes, RSred
   RETURN, chisqRes
@@ -129,7 +130,7 @@ FUNCTION AllOpt, FIXEDRV=fixedRv, FIXEDZP=zplist, FIXED275=shift275
 ;* samples from multiD gaussian distribution and calls LSST_dump_func
 ;
 ;***************************************************************************
-  COMMON TopInfo,  nStars, nBp, nBpHST, bpData, bandList, bandDict, zp, Tstars, TMinStars, TMaxStars, Gstars, GMinStars, GMaxStars, zpStar, EBV, modelWl, modelFluxes, sampleHST
+  COMMON TopInfo,  nStars, nBp, nBpHST, bpData, bandList, bandDict, zp, Tstars, TMinStars, TMaxStars, Gstars, GMinStars, GMaxStars, zpStar, EBV, modelWl, modelFluxes, sampleHST, HSTObsUncAll
   COMMON ZpMinimizeInfo, fitResult, chisqRes, scaleFactor, idRS, fluxRS, obsMagRS
   COMMON ScaleInfo, scaleFactor2, scaleFactor2Inv, scaleFactor3, scaleFactor3Inv, scaleFactor275, scaleFactor275Inv
 
@@ -190,6 +191,11 @@ FUNCTION AllOpt, FIXEDRV=fixedRv, FIXEDZP=zplist, FIXED275=shift275
      ENDELSE
 
      paramsLB(nBpHST:(nBpHST+nStars-1)) = 0.0               ; extinction always >0
+
+     IF idRS NE -1 THEN BEGIN                               ; extinction forced to 0 for 
+        paramsUB(nBpHST+idRS-1) = 0.0
+     ENDIF
+
 
      status = -1
      
