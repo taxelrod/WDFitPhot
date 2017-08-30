@@ -123,7 +123,7 @@ FUNCTION ExtinctFuncAll, paramVec
 END
 
 
-FUNCTION AllOpt, FIXEDRV=fixedRv, FIXEDZP=zplist, FIXED275=shift275
+FUNCTION AllOpt, FIXEDRV=fixedRv, FIXEDZP=zplist, FIXED275=shift275, ZEROEBV=zeroebv
 
 ;
 ;****************************************************************************
@@ -192,8 +192,15 @@ FUNCTION AllOpt, FIXEDRV=fixedRv, FIXEDZP=zplist, FIXED275=shift275
 
      paramsLB(nBpHST:(nBpHST+nStars-1)) = 0.0               ; extinction always >0
 
-     IF idRS NE -1 THEN BEGIN                               ; extinction forced to 0 for 
-        paramsUB(nBpHST+idRS-1) = 0.0
+     IF idRS NE -1 THEN BEGIN
+        IF KEYWORD_SET(zeroebv) THEN BEGIN
+           paramsUB(nBpHST+idRS-1) = zeroebv
+           paramsLB(nBpHST+idRS-1) = zeroebv
+           PRINTF, 2, 'zeroEBV= ', zeroebv
+        ENDIF ELSE BEGIN
+                                ; extinction forced to 0 for star idRS
+           paramsUB(nBpHST+idRS-1) = 0.0
+        ENDELSE
      ENDIF
 
 

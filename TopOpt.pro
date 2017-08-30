@@ -5,7 +5,7 @@
 ; Also, starList should have only a single star
 ;
 
-PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,FIXEDZP=zplist,FIXED275=shift275,PLOTSTARS=doPlots,DUMPFLUX=fluxFileName
+PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,FIXEDZP=zplist,FIXED275=shift275,ZEROEBV=zeroebv,PLOTSTARS=doPlots,DUMPFLUX=fluxFileName
 
   COMMON TopInfo,  nStars, nBp, nBpHST, bpData, bandList, bandDict, zp, Tstars, TMinStars, TMaxStars, Gstars, GMinStars, GMaxStars, zpStar, EBV, modelWl, modelFluxes, sampleHST, HSTObsUncAll
   COMMON ZpMinimizeInfo, fitResult, chisqRes, scaleFactor, idRS, fluxRS, obsMagRS
@@ -222,7 +222,7 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,FIXEDZP=zplist,
 ; OPTIMIZER CALL    
 ;
 ; ------------------------------------------------------------ 
-     paramsAll = AllOpt(FIXEDRV=fixedRv,FIXEDZP=zplist,FIXED275=shift275)
+     paramsAll = AllOpt(FIXEDRV=fixedRv,FIXEDZP=zplist,FIXED275=shift275,ZEROEBV=zeroebv)
 ; ------------------------------------------------------------ 
 ;
 ;
