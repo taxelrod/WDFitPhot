@@ -1,15 +1,21 @@
 ;
 ; This is the top level sequencer for the optimization
 ;
-; Note, if zplist is given, the reddening constraint star is ignored.
+; EBVLIMITS is a list of [starname, ebvmax] pairs, eg
+; EBVLIMITS=LIST(LIST('G191B2V', 0.005), LIST('GD71', 0))
+; Note, if zplist is given, the reddening constraints are ignored.
 ; Also, starList should have only a single star
 ;
 
-PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,FIXEDZP=zplist,FIXED275=shift275,ZEROEBV=zeroebv,PLOTSTARS=doPlots,DUMPFLUX=fluxFileName
+PRO TopOpt,starFile,starListInp,nSample,outFileName,FIXEDRV=fixedRv,FIXEDZP=zplist,FIXED275=shift275,EBVLIMITS=ebvlimits,PLOTSTARS=doPlots,DUMPFLUX=fluxFileName
 
-  COMMON TopInfo,  nStars, nBp, nBpHST, bpData, bandList, bandDict, zp, Tstars, TMinStars, TMaxStars, Gstars, GMinStars, GMaxStars, zpStar, EBV, modelWl, modelFluxes, sampleHST, HSTObsUncAll
+  COMMON TopInfo,  nStars, nBp, nBpHST, bpData, bandList, bandDict, zp, Tstars, TMinStars, TMaxStars, Gstars, GMinStars, GMaxStars, zpStar, EBV, modelWl, modelFluxes, sampleHST, HSTObsUncAll, starList
   COMMON ZpMinimizeInfo, fitResult, chisqRes, scaleFactor, idRS, fluxRS, obsMagRS
   COMMON ScaleInfo, scaleFactor2, scaleFactor2Inv, scaleFactor3, scaleFactor3Inv, scaleFactor275, scaleFactor275Inv
+
+  starList = starListInp
+
+  RSStar = ''
 
   IF KEYWORD_SET(zplist) THEN BEGIN
      RSStar = ''
@@ -18,12 +24,8 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,FIXEDZP=zplist,
         PRINT, 'When ZP is given, starList can have only one star'
         RETURN
      ENDIF
+  ENDIF
      
-  ENDIF ELSE BEGIN
-     RSStar = 'G191B2B'
-  ENDELSE
-
-
   CLOSE,2
   OPENW,2,outFileName
 
@@ -187,17 +189,16 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,FIXEDZP=zplist,
         idx = (k-1)*nBpHST
         sampleHST(idx:(idx+nBpHST-1)) = mrandomn(undef, covarHST[*,*,k-1]) + HSTObsAll(idx:(idx+nBpHST-1))
         randomTG = mrandomn(undef, covarTG[*,*,k-1])
-        TStars = TNominal + randomTG(0)
-        GStars = GNominal + randomTG(1)
+        TStars[k-1] = TNominal[k-1] + randomTG(0)
+        GStars[k-1] = GNominal[k-1] + randomTG(1)
      ENDFOR
      
      Torig = Tstars
      Gorig = Gstars
      
 ;
-; initial guesses for ZpStar and EBV
+; initial guesses for EBV
 ;
-     ZpStars = DBLARR(nStars)
      EBV = EBV0
 
      
@@ -222,7 +223,7 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,FIXEDZP=zplist,
 ; OPTIMIZER CALL    
 ;
 ; ------------------------------------------------------------ 
-     paramsAll = AllOpt(FIXEDRV=fixedRv,FIXEDZP=zplist,FIXED275=shift275,ZEROEBV=zeroebv)
+     paramsAll = AllOpt(FIXEDRV=fixedRv,FIXEDZP=zplist,FIXED275=shift275,EBVLIMITS=ebvlimits)
 ; ------------------------------------------------------------ 
 ;
 ;
@@ -319,7 +320,7 @@ PRO TopOpt,starFile,starList,nSample,outFileName,FIXEDRV=fixedRv,FIXEDZP=zplist,
 
         FOR j = 1, nBp DO BEGIN
            bp = bpData[j-1]
-           bandMag[j-1] = synphot2(modelWl, fluxe, bp.wavelength, bp.throughput, -zeropoints(j-1)) + ZpStars[k-1] - K0
+           bandMag[j-1] = synphot2(modelWl, fluxe, bp.wavelength, bp.throughput, -zeropoints(j-1)) + zpStar[k-1] - K0
            PRINTF, 2, FORMAT=format2, bandMag[j-1]
         ENDFOR
 

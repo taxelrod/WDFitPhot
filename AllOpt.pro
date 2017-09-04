@@ -8,7 +8,7 @@ FUNCTION ExtinctFuncAll, paramVec
 ; paramVec - (zp_i, R, Ebv)
 ; vals - synth_mag_{ni} + (zp_i + X_i(R, Ebv_n))
 ; 
-  COMMON TopInfo,  nStars, nBp, nBpHST, bpData, bandList, bandDict, zp, Tstars, TMinStars, TMaxStars, Gstars, GMinStars, GMaxStars, zpStar, EBV, modelWl, modelFluxes, sampleHST, HSTObsUncAll
+  COMMON TopInfo,  nStars, nBp, nBpHST, bpData, bandList, bandDict, zp, Tstars, TMinStars, TMaxStars, Gstars, GMinStars, GMaxStars, zpStar, EBV, modelWl, modelFluxes, sampleHST, HSTObsUncAll, starList
 
   COMMON ZpMinimizeInfo, fitResult, chisqRes, scaleFactor, idRS, fluxRS, obsMagRS
 
@@ -123,14 +123,14 @@ FUNCTION ExtinctFuncAll, paramVec
 END
 
 
-FUNCTION AllOpt, FIXEDRV=fixedRv, FIXEDZP=zplist, FIXED275=shift275, ZEROEBV=zeroebv
+FUNCTION AllOpt, FIXEDRV=fixedRv, FIXEDZP=zplist, FIXED275=shift275, EBVLIMITS=ebvlimits
 
 ;
 ;****************************************************************************
 ;* samples from multiD gaussian distribution and calls LSST_dump_func
 ;
 ;***************************************************************************
-  COMMON TopInfo,  nStars, nBp, nBpHST, bpData, bandList, bandDict, zp, Tstars, TMinStars, TMaxStars, Gstars, GMinStars, GMaxStars, zpStar, EBV, modelWl, modelFluxes, sampleHST, HSTObsUncAll
+  COMMON TopInfo,  nStars, nBp, nBpHST, bpData, bandList, bandDict, zp, Tstars, TMinStars, TMaxStars, Gstars, GMinStars, GMaxStars, zpStar, EBV, modelWl, modelFluxes, sampleHST, HSTObsUncAll, starList
   COMMON ZpMinimizeInfo, fitResult, chisqRes, scaleFactor, idRS, fluxRS, obsMagRS
   COMMON ScaleInfo, scaleFactor2, scaleFactor2Inv, scaleFactor3, scaleFactor3Inv, scaleFactor275, scaleFactor275Inv
 
@@ -143,7 +143,7 @@ FUNCTION AllOpt, FIXEDRV=fixedRv, FIXEDZP=zplist, FIXED275=shift275, ZEROEBV=zer
   scaleFactor = 1.0           ; to fool CONSTRAINED_MIN into doing the right stepsize
   scaleFactorInv = 1./scaleFactor
 
-  scaleFactor2 = 1.0e4           
+  scaleFactor2 = 1.0e5           
   scaleFactor2Inv = 1./scaleFactor2
 
   scaleFactor3 = 1.0e1
@@ -189,20 +189,25 @@ FUNCTION AllOpt, FIXEDRV=fixedRv, FIXEDZP=zplist, FIXED275=shift275, ZEROEBV=zer
         paramsLB(nBPHST-1) = scaleFactorInv*2.1
         paramsUB(nBPHST-1) = scaleFactorInv*4.0
      ENDELSE
-
+;---------------------------------------------------------
      paramsLB(nBpHST:(nBpHST+nStars-1)) = 0.0               ; extinction always >0
+     paramsUB(nBpHST:(nBpHST+nStars-1)) = 1.0               
 
-     IF idRS NE -1 THEN BEGIN
-        IF KEYWORD_SET(zeroebv) THEN BEGIN
-           paramsUB(nBpHST+idRS-1) = zeroebv
-           paramsLB(nBpHST+idRS-1) = zeroebv
-           PRINTF, 2, 'zeroEBV= ', zeroebv
-        ENDIF ELSE BEGIN
-                                ; extinction forced to 0 for star idRS
-           paramsUB(nBpHST+idRS-1) = 0.0
-        ENDELSE
+     IF KEYWORD_SET(ebvlimits) THEN BEGIN
+        nLimits = ebvlimits.Count()
+        FOR n = 1, nLimits DO BEGIN
+           element = ebvlimits[n-1]
+           starName = element[0]
+           ebvLimit = element[1]
+           FOR k = 1, nStars DO BEGIN
+              IF starList[k-1] eq starName THEN BEGIN
+                 paramsUB(nBpHST+k-1) = ebvLimit
+                 PRINTF, 2, 'EBV upper limit for star ', starName, k, ' set to ', ebvLimit
+              ENDIF
+           ENDFOR
+        ENDFOR
      ENDIF
-
+;-----------------------------------------------------
 
      status = -1
      
